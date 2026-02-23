@@ -3,31 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASL v2.3.1 | Adult Stats Lab</title>
+    <title>ASL v2.3.2 | Adult Stats Lab</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --asl-primary: #ff4d6d; --asl-bg: #05070a; }
         body { background-color: var(--asl-bg); color: #e6edf3; font-family: 'Inter', sans-serif; overflow-x: hidden; min-height: 100vh; }
-        .privacy-shield { filter: blur(30px); transition: filter 0.4s ease; cursor: pointer; }
+        .privacy-shield { filter: blur(30px); transition: filter 0.4s ease; cursor: pointer; background: #1a1a1a; }
         .privacy-shield.active { filter: blur(0); }
-        .carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
-        .carousel-container::-webkit-scrollbar { display: none; }
-        .carousel-item { flex: 0 0 100%; scroll-snap-align: start; }
-        .face-priority { object-position: center 20%; object-fit: cover; }
         .asl-gradient { background: linear-gradient(90deg, #ff4d6d 0%, #ff758f 100%); }
+        /* 画像がない場合のダミー背景 */
+        .img-placeholder { background: linear-gradient(45deg, #1e293b, #0f172a); }
     </style>
 </head>
 <body>
     <div id="asl-root">
-        <div class="flex items-center justify-center min-height-screen py-20">
-            <div class="animate-spin h-8 w-8 border-4 border-rose-500 rounded-full border-t-transparent"></div>
+        <div class="flex flex-col items-center justify-center py-40 space-y-4">
+            <div class="animate-spin h-10 w-10 border-4 border-rose-500 rounded-full border-t-transparent"></div>
+            <p class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">Synchronizing Data...</p>
         </div>
     </div>
 
     <script>
         const CONFIG = {
             API: "https://script.google.com/macros/s/AKfycbwXkicb-JnAeZjbYNgjvks1fzmFjZyfmWg078vPhxyrXWSwuQxbV-sISN3AyZ3ONdVHwg/exec",
-            REV: "v2.3.1-FIX"
+            REV: "v2.3.2-PRODUCTION"
         };
 
         let db = [];
@@ -40,26 +39,27 @@
         async function bootASL() {
             try {
                 const response = await fetch(CONFIG.API);
+                if (!response.ok) throw new Error("API Offline");
                 db = await response.json();
-                console.log("Data loaded:", db.length, "items");
+                
+                // 初回ルーティング
                 window.onpopstate = router;
                 router();
             } catch (err) { 
-                console.error("ASL System Error:", err);
-                document.getElementById('asl-root').innerHTML = '<p class="p-10 text-center text-red-500">API connection error. Please check GAS deployment.</p>';
+                document.getElementById('asl-root').innerHTML = `
+                    <div class="p-20 text-center">
+                        <p class="text-rose-500 font-bold mb-2">SYSTEM ERROR</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-widest leading-loose">API connection timed out.<br>Please refresh the page.</p>
+                    </div>`;
             }
         }
 
         function router() {
             const path = window.location.pathname;
-            console.log("Current path:", path);
-            
             if (path.startsWith('/p/')) {
-                const cid = path.replace('/p/', '');
-                renderDetail(cid);
+                renderDetail(path.replace('/p/', ''));
             } else if (path.startsWith('/a/')) {
-                const slug = path.replace('/a/', '');
-                renderActressLP(slug);
+                renderActressLP(path.replace('/a/', ''));
             } else {
                 renderGallery();
             }
@@ -69,20 +69,21 @@
         function renderGallery() {
             const root = document.getElementById('asl-root');
             root.innerHTML = `
-                <header class="p-6 border-b border-white/5 flex justify-between items-end">
+                <header class="p-8 border-b border-white/5 flex justify-between items-end">
                     <div>
-                        <h1 class="text-2xl font-black italic tracking-tighter text-rose-500">ASL ANALYTICS</h1>
-                        <p class="text-[8px] text-slate-500 font-mono tracking-widest uppercase italic">Rev: ${CONFIG.REV}</p>
+                        <h1 class="text-2xl font-black italic tracking-tighter text-rose-500 leading-none">ASL ANALYTICS</h1>
+                        <p class="text-[8px] text-slate-600 font-mono mt-1 uppercase italic tracking-widest">Rev: ${CONFIG.REV}</p>
                     </div>
                 </header>
                 <main class="p-4 grid grid-cols-2 gap-4">
                     ${db.map(node => `
-                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/50 rounded-xl overflow-hidden border border-white/5 cursor-pointer hover:border-rose-500/30 transition-all">
-                            <div class="aspect-[3/4] relative">
-                                <img src="${node.IMAGE_URL}" class="w-full h-full face-priority privacy-shield">
-                                <div class="absolute top-2 left-2 bg-black/60 backdrop-blur px-1.5 py-0.5 rounded text-[8px] font-bold tracking-tighter">T-SCORE ${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
+                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/40 rounded-2xl overflow-hidden border border-white/5 cursor-pointer active:scale-95 transition-all">
+                            <div class="aspect-[3/4] relative img-placeholder">
+                                <img src="${cleanUrl(node.IMAGE_URL)}" class="w-full h-full object-cover privacy-shield" 
+                                     onerror="this.style.display='none'">
+                                <div class="absolute top-2 left-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-[8px] font-bold tracking-tighter border border-white/10">T:${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
                             </div>
-                            <div class="p-3"><h3 class="text-[10px] font-bold line-clamp-2 text-slate-300">${node.TITLE}</h3></div>
+                            <div class="p-3"><h3 class="text-[10px] font-bold line-clamp-2 text-slate-400 leading-snug uppercase">${node.TITLE}</h3></div>
                         </div>
                     `).join('')}
                 </main>
@@ -92,39 +93,36 @@
 
         function renderDetail(cid) {
             const node = db.find(n => n.CID === cid);
-            if (!node) {
-                console.warn("Item not found:", cid);
-                return navigate('/');
-            }
+            if (!node) return navigate('/');
 
             const root = document.getElementById('asl-root');
             root.innerHTML = `
                 <div class="relative w-full aspect-[4/5] bg-black">
-                    <div class="carousel-container h-full">
-                        <div class="carousel-item"><img src="${node.IMAGE_URL}" class="w-full h-full object-contain privacy-shield"></div>
-                    </div>
-                    <button onclick="navigate('/')" class="absolute top-6 left-6 w-10 h-10 bg-black/40 backdrop-blur-xl rounded-full flex items-center justify-center text-white border border-white/10">✕</button>
+                    <img src="${cleanUrl(node.IMAGE_URL)}" class="w-full h-full object-contain privacy-shield">
+                    <button onclick="navigate('/')" class="absolute top-6 left-6 w-10 h-10 bg-black/60 backdrop-blur-xl rounded-full flex items-center justify-center text-white border border-white/10">✕</button>
                 </div>
-                <div class="p-8 space-y-8">
+                <div class="p-8 space-y-10">
                     <section>
-                        <div class="flex items-baseline gap-3">
-                            <span class="text-6xl font-black italic text-white tracking-tighter">${parseFloat(node.T_SCORE || 0).toFixed(1)}</span>
-                            <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest italic">Rank ${node.TIER || 'A'}</span>
+                        <div class="flex items-baseline gap-3 mb-2">
+                            <span class="text-7xl font-black italic text-white tracking-tighter">${parseFloat(node.T_SCORE || 0).toFixed(1)}</span>
+                            <span class="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] italic">Rank ${node.TIER || 'A'}</span>
                         </div>
-                        <h2 class="text-xl font-bold leading-snug mt-2 text-slate-100">${node.TITLE}</h2>
-                        <div onclick="navigate('/a/${node.ACTRESS_SLUG}')" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-rose-500/10 rounded-full border border-rose-500/20 cursor-pointer hover:bg-rose-500/20 active:scale-95 transition-all">
-                            <span class="text-xs font-bold text-rose-400">@${node.ACTRESS_NAME}</span>
+                        <h2 class="text-xl font-bold leading-tight text-slate-100">${node.TITLE}</h2>
+                        <div onclick="navigate('/a/${node.ACTRESS_SLUG}')" class="mt-6 inline-flex items-center gap-3 px-4 py-2 bg-rose-500/10 rounded-full border border-rose-500/20 cursor-pointer hover:bg-rose-500/20 active:scale-95 transition-all">
+                            <span class="w-2 h-2 bg-rose-500 rounded-full shadow-[0_0_8px_#ff4d6d]"></span>
+                            <span class="text-xs font-black text-rose-400 uppercase tracking-widest">@${node.ACTRESS_NAME}</span>
                         </div>
                     </section>
-                    <section class="space-y-4 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
+                    <section class="space-y-4 bg-white/[0.02] p-8 rounded-3xl border border-white/5">
                         ${['VIS', 'STY', 'TECH', 'HEA', 'RAR', 'VAL'].map(key => renderStatBar(key, node[key])).join('')}
                     </section>
-                    <div class="prose prose-invert border-t border-white/5 pt-6">
-                        <p class="text-sm leading-relaxed text-slate-400 italic">"${node.NARRATIVE_ALL || '解析データ準備中...'}"</p>
-                    </div>
+                    <p class="text-sm leading-relaxed text-slate-400 italic font-medium opacity-80">"${node.NARRATIVE_ALL || 'Processing Narrative Data...'}"</p>
                 </div>
-                <div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-50 text-center">
-                    <a href="https://www.dmm.co.jp/mono/dvd/-/detail/=/cid=${node.CID}/" class="block w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-5 rounded-2xl shadow-[0_20px_50px_rgba(255,77,109,0.3)] uppercase tracking-[0.2em] text-[10px] transition-all">Execute Data Acquisition</a>
+                <div class="fixed bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/95 to-transparent z-50">
+                    <a href="https://www.dmm.co.jp/mono/dvd/-/detail/=/cid=${node.CID}/" 
+                       class="flex items-center justify-center w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-5 rounded-2xl shadow-[0_25px_60px_-15px_rgba(225,29,72,0.5)] uppercase tracking-[0.3em] text-[11px] transition-all">
+                        Execute Data Acquisition
+                    </a>
                 </div>
             `;
             initPrivacyShield();
@@ -135,18 +133,16 @@
             const actressName = works.length > 0 ? works[0].ACTRESS_NAME : "Unknown";
             const root = document.getElementById('asl-root');
             root.innerHTML = `
-                <header class="p-6 border-b border-white/5">
-                    <button onclick="navigate('/')" class="text-slate-500 text-[10px] mb-4 font-bold tracking-widest border border-white/10 px-3 py-1 rounded-full uppercase">← Back</button>
-                    <h1 class="text-3xl font-black italic tracking-tighter text-white uppercase">${actressName}</h1>
-                    <p class="text-[9px] text-rose-500 font-bold tracking-[0.3em] mt-2 italic">ACTRESS DOSSIER / TOTAL WORKS: ${works.length}</p>
+                <header class="p-8 border-b border-white/5">
+                    <button onclick="navigate('/')" class="text-slate-500 text-[9px] mb-6 font-black tracking-[0.3em] border border-white/10 px-4 py-1.5 rounded-full uppercase">← Return</button>
+                    <h1 class="text-4xl font-black italic tracking-tighter text-white uppercase">${actressName}</h1>
+                    <p class="text-[10px] text-rose-500 font-bold tracking-[0.4em] mt-3 italic uppercase">Dossier / ${works.length} Analysed Units</p>
                 </header>
-                <main class="p-4 grid grid-cols-2 gap-4 pb-24">
+                <main class="p-4 grid grid-cols-2 gap-4 pb-32">
                     ${works.map(node => `
-                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/50 rounded-xl overflow-hidden border border-white/5">
-                            <div class="aspect-[3/4] relative">
-                                <img src="${node.IMAGE_URL}" class="w-full h-full face-priority privacy-shield">
-                                <div class="absolute bottom-2 left-2 text-[8px] font-bold italic text-rose-400 tracking-tighter">T-SCORE ${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
-                            </div>
+                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/40 rounded-2xl overflow-hidden border border-white/5 relative aspect-[3/4]">
+                            <img src="${cleanUrl(node.IMAGE_URL)}" class="w-full h-full object-cover privacy-shield">
+                            <div class="absolute bottom-3 left-3 text-[9px] font-black italic text-rose-500 tracking-tighter">T:${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
                         </div>
                     `).join('')}
                 </main>
@@ -156,11 +152,16 @@
 
         function renderStatBar(label, val) {
             const v = parseFloat(val) || 0;
-            const fullLabels = { VIS: 'Visual', STY: 'Style', TECH: 'Tech', HEA: 'Heat', RAR: 'Rare', VAL: 'Value' };
-            return `<div class="space-y-1">
-                <div class="flex justify-between text-[8px] font-black text-slate-500 uppercase tracking-widest"><span>${fullLabels[label] || label}</span><span>${v.toFixed(1)}</span></div>
-                <div class="h-1 bg-white/5 rounded-full"><div class="asl-gradient h-full" style="width: ${(v/5)*100}%"></div></div>
+            return `<div class="space-y-1.5">
+                <div class="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-widest"><span>${label}</span><span>${v.toFixed(1)}</span></div>
+                <div class="h-1 bg-white/5 rounded-full overflow-hidden"><div class="asl-gradient h-full" style="width: ${(v/5)*100}%"></div></div>
             </div>`;
+        }
+
+        function cleanUrl(url) {
+            if (!url) return '';
+            // 複数URLが入っている場合、最初の1つだけを使う
+            return url.split(/[,\s\n]/)[0].trim();
         }
 
         function initPrivacyShield() {
