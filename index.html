@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASL v2.3 | Adult Stats Lab</title>
+    <title>ASL v2.3.1 | Adult Stats Lab</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --asl-primary: #ff4d6d; --asl-bg: #05070a; }
-        body { background-color: var(--asl-bg); color: #e6edf3; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background-color: var(--asl-bg); color: #e6edf3; font-family: 'Inter', sans-serif; overflow-x: hidden; min-height: 100vh; }
         .privacy-shield { filter: blur(30px); transition: filter 0.4s ease; cursor: pointer; }
         .privacy-shield.active { filter: blur(0); }
         .carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
@@ -18,13 +18,16 @@
     </style>
 </head>
 <body>
-    <div id="asl-root"></div>
+    <div id="asl-root">
+        <div class="flex items-center justify-center min-height-screen py-20">
+            <div class="animate-spin h-8 w-8 border-4 border-rose-500 rounded-full border-t-transparent"></div>
+        </div>
+    </div>
 
     <script>
         const CONFIG = {
-            // 新しいAPI URLに差し替え済み
             API: "https://script.google.com/macros/s/AKfycbwXkicb-JnAeZjbYNgjvks1fzmFjZyfmWg078vPhxyrXWSwuQxbV-sISN3AyZ3ONdVHwg/exec",
-            REV: "v2.3.0-FINAL-ROUTE"
+            REV: "v2.3.1-FIX"
         };
 
         let db = [];
@@ -38,20 +41,25 @@
             try {
                 const response = await fetch(CONFIG.API);
                 db = await response.json();
+                console.log("Data loaded:", db.length, "items");
                 window.onpopstate = router;
                 router();
             } catch (err) { 
                 console.error("ASL System Error:", err);
-                document.getElementById('asl-root').innerHTML = '<p class="p-10 text-center">API読み込みエラー。デプロイ設定を確認してください。</p>';
+                document.getElementById('asl-root').innerHTML = '<p class="p-10 text-center text-red-500">API connection error. Please check GAS deployment.</p>';
             }
         }
 
         function router() {
             const path = window.location.pathname;
+            console.log("Current path:", path);
+            
             if (path.startsWith('/p/')) {
-                renderDetail(path.replace('/p/', ''));
+                const cid = path.replace('/p/', '');
+                renderDetail(cid);
             } else if (path.startsWith('/a/')) {
-                renderActressLP(path.replace('/a/', ''));
+                const slug = path.replace('/a/', '');
+                renderActressLP(slug);
             } else {
                 renderGallery();
             }
@@ -69,9 +77,99 @@
                 </header>
                 <main class="p-4 grid grid-cols-2 gap-4">
                     ${db.map(node => `
-                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/50 rounded-xl overflow-hidden border border-white/5 cursor-pointer">
+                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/50 rounded-xl overflow-hidden border border-white/5 cursor-pointer hover:border-rose-500/30 transition-all">
                             <div class="aspect-[3/4] relative">
                                 <img src="${node.IMAGE_URL}" class="w-full h-full face-priority privacy-shield">
-                                <div class="absolute top-2 left-2 bg-black/60 backdrop-blur px-1.5 py-0.5 rounded text-[8px] font-bold">T-SCORE ${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
+                                <div class="absolute top-2 left-2 bg-black/60 backdrop-blur px-1.5 py-0.5 rounded text-[8px] font-bold tracking-tighter">T-SCORE ${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
                             </div>
-                            <div class="p-3
+                            <div class="p-3"><h3 class="text-[10px] font-bold line-clamp-2 text-slate-300">${node.TITLE}</h3></div>
+                        </div>
+                    `).join('')}
+                </main>
+            `;
+            initPrivacyShield();
+        }
+
+        function renderDetail(cid) {
+            const node = db.find(n => n.CID === cid);
+            if (!node) {
+                console.warn("Item not found:", cid);
+                return navigate('/');
+            }
+
+            const root = document.getElementById('asl-root');
+            root.innerHTML = `
+                <div class="relative w-full aspect-[4/5] bg-black">
+                    <div class="carousel-container h-full">
+                        <div class="carousel-item"><img src="${node.IMAGE_URL}" class="w-full h-full object-contain privacy-shield"></div>
+                    </div>
+                    <button onclick="navigate('/')" class="absolute top-6 left-6 w-10 h-10 bg-black/40 backdrop-blur-xl rounded-full flex items-center justify-center text-white border border-white/10">✕</button>
+                </div>
+                <div class="p-8 space-y-8">
+                    <section>
+                        <div class="flex items-baseline gap-3">
+                            <span class="text-6xl font-black italic text-white tracking-tighter">${parseFloat(node.T_SCORE || 0).toFixed(1)}</span>
+                            <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest italic">Rank ${node.TIER || 'A'}</span>
+                        </div>
+                        <h2 class="text-xl font-bold leading-snug mt-2 text-slate-100">${node.TITLE}</h2>
+                        <div onclick="navigate('/a/${node.ACTRESS_SLUG}')" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-rose-500/10 rounded-full border border-rose-500/20 cursor-pointer hover:bg-rose-500/20 active:scale-95 transition-all">
+                            <span class="text-xs font-bold text-rose-400">@${node.ACTRESS_NAME}</span>
+                        </div>
+                    </section>
+                    <section class="space-y-4 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
+                        ${['VIS', 'STY', 'TECH', 'HEA', 'RAR', 'VAL'].map(key => renderStatBar(key, node[key])).join('')}
+                    </section>
+                    <div class="prose prose-invert border-t border-white/5 pt-6">
+                        <p class="text-sm leading-relaxed text-slate-400 italic">"${node.NARRATIVE_ALL || '解析データ準備中...'}"</p>
+                    </div>
+                </div>
+                <div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-50 text-center">
+                    <a href="https://www.dmm.co.jp/mono/dvd/-/detail/=/cid=${node.CID}/" class="block w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-5 rounded-2xl shadow-[0_20px_50px_rgba(255,77,109,0.3)] uppercase tracking-[0.2em] text-[10px] transition-all">Execute Data Acquisition</a>
+                </div>
+            `;
+            initPrivacyShield();
+        }
+
+        function renderActressLP(slug) {
+            const works = db.filter(n => n.ACTRESS_SLUG === slug);
+            const actressName = works.length > 0 ? works[0].ACTRESS_NAME : "Unknown";
+            const root = document.getElementById('asl-root');
+            root.innerHTML = `
+                <header class="p-6 border-b border-white/5">
+                    <button onclick="navigate('/')" class="text-slate-500 text-[10px] mb-4 font-bold tracking-widest border border-white/10 px-3 py-1 rounded-full uppercase">← Back</button>
+                    <h1 class="text-3xl font-black italic tracking-tighter text-white uppercase">${actressName}</h1>
+                    <p class="text-[9px] text-rose-500 font-bold tracking-[0.3em] mt-2 italic">ACTRESS DOSSIER / TOTAL WORKS: ${works.length}</p>
+                </header>
+                <main class="p-4 grid grid-cols-2 gap-4 pb-24">
+                    ${works.map(node => `
+                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/50 rounded-xl overflow-hidden border border-white/5">
+                            <div class="aspect-[3/4] relative">
+                                <img src="${node.IMAGE_URL}" class="w-full h-full face-priority privacy-shield">
+                                <div class="absolute bottom-2 left-2 text-[8px] font-bold italic text-rose-400 tracking-tighter">T-SCORE ${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </main>
+            `;
+            initPrivacyShield();
+        }
+
+        function renderStatBar(label, val) {
+            const v = parseFloat(val) || 0;
+            const fullLabels = { VIS: 'Visual', STY: 'Style', TECH: 'Tech', HEA: 'Heat', RAR: 'Rare', VAL: 'Value' };
+            return `<div class="space-y-1">
+                <div class="flex justify-between text-[8px] font-black text-slate-500 uppercase tracking-widest"><span>${fullLabels[label] || label}</span><span>${v.toFixed(1)}</span></div>
+                <div class="h-1 bg-white/5 rounded-full"><div class="asl-gradient h-full" style="width: ${(v/5)*100}%"></div></div>
+            </div>`;
+        }
+
+        function initPrivacyShield() {
+            document.querySelectorAll('.privacy-shield').forEach(el => {
+                el.onclick = (e) => { e.stopPropagation(); el.classList.toggle('active'); };
+            });
+        }
+
+        bootASL();
+    </script>
+</body>
+</html>
