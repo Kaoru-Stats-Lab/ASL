@@ -27,7 +27,24 @@
         #video-wrapper { width: 100%; position: relative; background: #000; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
         @media (max-width: 768px) { #video-wrapper { border-radius: 0; border-left: none; border-right: none; width: 100vw; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; } }
     </style>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      // SPAのURL変更を検知するための設定
+      gtag('config', 'G-606GEFXTW4', {
+        'send_page_view': true
+      });
+    </script>
 </head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-606GEFXTW4');
+</script>
 <body class="selection:bg-rose-500/30">
 
     <div onclick="toggleGlobalBlur()" class="blur-indicator bg-black/80 backdrop-blur-2xl border border-white/20 px-4 py-2 rounded-full flex items-center gap-3 cursor-pointer shadow-2xl">
