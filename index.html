@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASL v2.8.5 | Adult Stats Lab</title>
-    
+    <title>ASL v2.8.6 | Adult Stats Lab</title>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -12,257 +11,102 @@
       gtag('js', new Date());
       gtag('config', 'G-606GEFXTW4');
     </script>
-
     <style>
-        :root {
-            --accent: #FF4757;      /* アクセント：レッド */
-            --bg: #FFFFFF;          /* ベース：ホワイト */
-            --text-main: #1A1A1A;   /* 主要文字：ブラック */
-            --text-sub: #666666;    /* サブ文字：グレー */
-            --border: #EEEEEE;      /* 境界線 */
-            --gold: #FFD700;        /* Goldバッジ */
-            --silver: #E0E0E0;      /* Silverバッジ */
-            --content-width: 1140px;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0; padding: 0;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* --- ブラー（シールド）制御 --- */
-        .blur-target { filter: blur(35px); transition: filter 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        /* CSSは前回の2.8.5を継承しつつ、画像の表示を安定化 */
+        :root { --accent: #FF4757; --bg: #FFFFFF; --text-main: #1A1A1A; --text-sub: #666666; --border: #EEEEEE; --gold: #FFD700; --silver: #E0E0E0; --content-width: 1140px; }
+        body { background: var(--bg); color: var(--text-main); font-family: -apple-system, sans-serif; margin: 0; line-height: 1.6; }
+        .blur-target { filter: blur(35px); transition: filter 0.6s ease; }
         body.unlocked .blur-target { filter: blur(0); }
-
-        .shield-ui {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.98);
-            z-index: 9999; display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(20px);
-        }
+        .shield-ui { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
         body.unlocked .shield-ui { display: none; }
-
-        .unlock-btn {
-            background: var(--text-main); color: white;
-            border: none; padding: 20px 40px; border-radius: 12px;
-            font-weight: 900; letter-spacing: 2px; font-size: 1.1rem; cursor: pointer;
-        }
-
-        /* --- レスポンシブ・グリッド構造 --- */
-        .app-container {
-            display: flex; flex-direction: column; width: 100%; margin: 0 auto;
-        }
-
-        /* PC版レイアウト */
-        @media (min-width: 768px) {
-            .app-container {
-                flex-direction: row; max-width: var(--content-width);
-                gap: 50px; padding: 60px 20px;
-            }
-            .main-column { flex: 1; min-width: 0; }
-            .side-column { width: 340px; position: sticky; top: 40px; height: fit-content; }
-            .hero { border-radius: 16px; overflow: hidden; margin-bottom: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
-            .footer-nav { 
-                position: static !important; background: none !important; border: none !important;
-                flex-direction: column !important; padding: 0 !important; margin-top: 30px; 
-            }
-        }
-
-        /* モバイル版レイアウト (iPhone 14 Pro対応) */
-        @media (max-width: 767px) {
-            .side-column { padding: 20px; }
-            .footer-nav {
-                position: fixed; bottom: 0; left: 0; width: 100%;
-                background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-                border-top: 1px solid var(--border);
-                padding: 15px 20px calc(15px + env(safe-area-inset-bottom));
-                display: flex; justify-content: space-between; gap: 12px; z-index: 1000;
-            }
-        }
-
-        /* --- ヒーローセクション --- */
-        .hero { position: relative; width: 100%; background: #F8F8F8; }
-        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
-        .carousel::-webkit-scrollbar { display: none; }
-        .carousel-item { flex: 0 0 100%; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .carousel-item img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease; }
-        .carousel-item img.loaded { opacity: 1; }
-
-        /* --- Metacriticスタイル コンポーネント --- */
+        .unlock-btn { background: var(--text-main); color: white; border: none; padding: 20px 40px; border-radius: 12px; font-weight: 900; cursor: pointer; }
+        .app-container { display: flex; flex-direction: column; width: 100%; margin: 0 auto; }
+        @media (min-width: 768px) { .app-container { flex-direction: row; max-width: var(--content-width); gap: 50px; padding: 60px 20px; } .main-column { flex: 1; min-width: 0; } .side-column { width: 340px; position: sticky; top: 40px; height: fit-content; } .footer-nav { position: static !important; flex-direction: column !important; padding: 0 !important; margin-top: 30px; } }
+        @media (max-width: 767px) { .side-column { padding: 20px; } .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); border-top: 1px solid var(--border); padding: 15px 20px calc(15px + env(safe-area-inset-bottom)); display: flex; justify-content: space-between; gap: 12px; z-index: 1000; } }
+        .hero { position: relative; width: 100%; background: #F8F8F8; aspect-ratio: 16/9; overflow: hidden; }
+        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; }
+        .carousel-item { flex: 0 0 100%; height: 100%; scroll-snap-align: center; }
+        .carousel-item img { width: 100%; height: 100%; object-fit: contain; }
         .score-row { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 25px; }
-        .score-box {
-            min-width: 65px; height: 65px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 30px; font-weight: 900; color: white;
-        }
-
-        .actress-name {
-            font-size: 1.6rem; font-weight: 900; margin: 0; letter-spacing: -1px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .work-title {
-            font-size: 0.95rem; color: var(--text-sub); margin-top: 8px;
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-        }
-
-        .tier-badge {
-            display: inline-block; padding: 3px 10px; font-size: 0.75rem; font-weight: 900;
-            border-radius: 4px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;
-        }
+        .score-box { min-width: 65px; height: 65px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900; color: white; }
+        .actress-name { font-size: 1.6rem; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tier-badge { display: inline-block; padding: 3px 10px; font-size: 0.75rem; font-weight: 900; border-radius: 4px; margin-bottom: 6px; text-transform: uppercase; }
         .tier-Gold { background: var(--gold); color: #8B4513; }
         .tier-Silver { background: var(--silver); color: #666; }
-
-        /* --- 水平ゲージ (|||||) --- */
         .stats-card { padding: 25px; background: #FAFAFA; border: 1px solid #F0F0F0; border-radius: 16px; margin-bottom: 30px; }
-        .stat-row {
-            font-family: 'Courier New', Courier, monospace; font-size: 12px;
-            display: flex; align-items: center; margin-bottom: 10px;
-        }
-        .stat-label { width: 45px; font-weight: bold; color: #AAA; }
-        .gauge-f { color: var(--accent); font-weight: bold; letter-spacing: 1px; }
-        .gauge-e { color: #DDD; letter-spacing: 1px; }
-        .stat-num { margin-left: auto; color: var(--text-main); font-weight: bold; }
-
-        /* --- テキスト装飾 --- */
-        .insight-box {
-            font-style: italic; border-left: 5px solid var(--accent);
-            padding: 20px 25px; background: #FDFDFD; margin: 30px 0;
-            font-size: 1.2rem; line-height: 1.5; color: #333;
-        }
-        .desc-text { font-size: 1rem; color: var(--text-sub); line-height: 1.8; text-align: justify; }
-
-        /* --- ボタン --- */
-        .nav-btn { flex: 1; padding: 16px; border-radius: 10px; text-align: center; font-weight: 800; font-size: 15px; text-decoration: none; transition: transform 0.2s; }
-        .nav-btn:active { transform: scale(0.97); }
-        .btn-main { background: var(--accent); color: white; box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3); }
+        .stat-row { font-family: monospace; font-size: 12px; display: flex; align-items: center; margin-bottom: 10px; }
+        .stat-label { width: 45px; color: #AAA; }
+        .gauge-f { color: var(--accent); }
+        .gauge-e { color: #DDD; }
+        .nav-btn { flex: 1; padding: 16px; border-radius: 10px; text-align: center; font-weight: 800; text-decoration: none; }
+        .btn-main { background: var(--accent); color: white; }
         .btn-sub { background: #F5F5F5; color: var(--text-main); }
     </style>
 </head>
 <body>
-
-    <div id="shield-ui" class="shield-ui">
-        <button class="unlock-btn" onclick="globalUnlock()">ACCESS GRANTED</button>
-    </div>
-
+    <div id="shield-ui" class="shield-ui"><button class="unlock-btn" onclick="globalUnlock()">ACCESS GRANTED</button></div>
     <div id="app"></div>
-
 <script>
-    const CONFIG = {
-        API: 'https://script.google.com/macros/s/AKfycbwpjpE95dwEeMB3VSkBdGiP38PTLtdtU_FCJ1Eia8pTg3sDLX75C5vMvH67bCIAapi-TQ/exec'
-    };
-
-    function globalUnlock() {
-        localStorage.setItem('asl_unlocked', 'true');
-        document.body.classList.add('unlocked');
-        gtag('event', 'unlock_all');
-    }
-
+    const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbwpjpE95dwEeMB3VSkBdGiP38PTLtdtU_FCJ1Eia8pTg3sDLX75C5vMvH67bCIAapi-TQ/exec' };
+    function globalUnlock() { localStorage.setItem('asl_unlocked', 'true'); document.body.classList.add('unlocked'); }
     const getGauge = (val) => {
-        const total = 20;
-        const filled = Math.round((val / 5.0) * total);
-        return `<span class="gauge-f">${'|'.repeat(filled)}</span><span class="gauge-e">${'|'.repeat(total - filled)}</span>`;
+        const v = parseFloat(val) || 0;
+        const total = 20; const filled = Math.round((v / 5.0) * total);
+        return `<span class="gauge-f">${'|'.repeat(filled)}</span><span class="gauge-e">${'|'.repeat(Math.max(0, total - filled))}</span>`;
     };
-
     async function init() {
-        if (localStorage.getItem('asl_unlocked') === 'true') {
-            document.body.classList.add('unlocked');
-        }
-        
+        if (localStorage.getItem('asl_unlocked') === 'true') document.body.classList.add('unlocked');
         const path = window.location.pathname;
         const productId = path.split('/').filter(Boolean).pop();
-        
-        // トップページ or /p/ 単体の場合はリスト表示へ
         if (!productId || productId === 'p') {
-            document.getElementById('app').innerHTML = `<div style="padding:100px; text-align:center;">Lab Archive Loading...</div>`;
+            document.getElementById('app').innerHTML = '<div style="padding:100px;text-align:center;">Archive Mode (In Development)</div>';
             return;
         }
-
         try {
             const res = await fetch(`${CONFIG.API}?id=${productId}`);
             const item = await res.json();
+            if (!item || item.error) throw new Error("Item not found");
             renderDetail(item);
         } catch (e) {
-            console.error("Fetch Error:", e);
+            document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;">Data Load Error: ${productId}</div>`;
         }
     }
-
     function renderDetail(item) {
-        const images = item.IMAGE_URLS ? item.IMAGE_URLS.split(',') : [];
-        const scoreColor = item.T_SCORE >= 70 ? '#66CC33' : (item.T_SCORE >= 50 ? '#FFCC33' : '#FF3333');
-        const tierClass = `tier-${item.TIER || 'Standard'}`;
-
+        const images = (item.IMAGE_URLS || "").split(',').filter(url => url.trim() !== "");
+        const score = Math.round(parseFloat(item.T_SCORE) || 0);
+        const scoreColor = score >= 70 ? '#66CC33' : (score >= 50 ? '#FFCC33' : '#FF3333');
         document.getElementById('app').innerHTML = `
             <div class="app-container">
                 <div class="main-column">
                     <div class="hero blur-target">
-                        <div class="carousel">
-                            ${images.map((src, i) => `
-                                <div class="carousel-item">
-                                    <img data-src="${src.trim()}" class="lazy" ${i === 0 ? `src="${src.trim()}" class="loaded"` : ''}>
-                                </div>
-                            `).join('')}
-                        </div>
+                        <div class="carousel">${images.map(src => `<div class="carousel-item"><img src="${src.trim()}"></div>`).join('')}</div>
                     </div>
-
-                    <div class="content-body">
-                        <div class="insight-box">"${item.INSIGHT_TEXT || 'No insight recorded.'}"</div>
-                        <h3 style="font-size:1.1rem; border-bottom:2px solid #1a1a1a; display:inline-block; margin-bottom:15px; letter-spacing:1px;">ANALYSIS REPORT</h3>
-                        <div class="desc-text">${item.META_DESC || ''}</div>
+                    <div style="padding: 20px;">
+                        <div style="font-style:italic; border-left:5px solid var(--accent); padding:15px; background:#F9F9F9; margin:20px 0; font-size:1.2rem;">"${item.INSIGHT_TEXT || ''}"</div>
+                        <div style="color:var(--text-sub); line-height:1.8;">${item.META_DESC || ''}</div>
                     </div>
                 </div>
-
                 <div class="side-column">
                     <div class="score-row">
-                        <div class="score-box" style="background:${scoreColor}">${Math.round(item.T_SCORE)}</div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div class="tier-badge ${tierClass}">${item.TIER || 'Standard'}</div>
-                            <h1 class="actress-name">${item.ACTRESS_NAME}</h1>
+                        <div class="score-box" style="background:${scoreColor}">${score}</div>
+                        <div style="flex:1; min-width:0;">
+                            <div class="tier-badge tier-${item.TIER}">${item.TIER || 'Standard'}</div>
+                            <h1 class="actress-name">${item.ACTRESS_NAME || 'Unknown'}</h1>
                         </div>
                     </div>
-
                     <div class="stats-card">
-                        ${['VIS','STY','TEC','HEA','RAR'].map(k => `
-                            <div class="stat-row">
-                                <span class="stat-label">${k}</span> ${getGauge(item[k])} <span class="stat-num">${item[k]}</span>
-                            </div>
-                        `).join('')}
+                        ${['VIS','STY','TEC','HEA','RAR'].map(k => `<div class="stat-row"><span class="stat-label">${k}</span> ${getGauge(item[k])} <span style="margin-left:auto;">${item[k] || 0}</span></div>`).join('')}
                     </div>
-
-                    <div class="work-title" style="margin-bottom:25px; font-weight:bold; line-height:1.5;">${item.TITLE}</div>
-
+                    <div style="margin-bottom:20px; font-weight:bold; color:var(--text-sub);">${item.TITLE || ''}</div>
                     <div class="footer-nav">
                         <a href="/" class="nav-btn btn-sub">BACK</a>
-                        <a href="${item.SCRAPE_SOURCE || '#'}" class="nav-btn btn-main">CHECK DETAILS</a>
+                        <a href="${item.SCRAPE_SOURCE || '#'}" target="_blank" class="nav-btn btn-main">CHECK DETAILS</a>
                     </div>
                 </div>
             </div>
         `;
-
-        initLazyLoad();
-        document.title = `${item.ACTRESS_NAME} | ASL`;
+        document.title = `${item.ACTRESS_NAME || 'ASL'} | Adult Stats Lab`;
     }
-
-    function initLazyLoad() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    if (img.dataset.src) {
-                        img.src = img.dataset.src;
-                        img.onload = () => img.classList.add('loaded');
-                        img.removeAttribute('data-src');
-                    }
-                    observer.unobserve(img);
-                }
-            });
-        }, { rootMargin: "0px 200px 0px 200px" });
-        document.querySelectorAll('img.lazy').forEach(img => observer.observe(img));
-    }
-
     init();
 </script>
 </body>
