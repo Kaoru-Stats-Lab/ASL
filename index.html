@@ -28,6 +28,35 @@
             flex-direction: column;
             position: relative;
         }
+
+        /* --- Censorship Protocol (Blur Logic) --- */
+.visual-frame {
+    width: 100%;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    background: #000;
+    position: relative;
+}
+
+/* 通常時は強めにぼかす */
+.visual-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(25px); /* ここでぼかし強度を調整 */
+    transition: filter 0.4s ease, transform 0.4s ease;
+    transform: scale(1.1); /* ぼかした時の端の白飛び防止 */
+}
+
+/* マウスを乗せた時だけ鮮明に */
+.analysis-card:hover .visual-frame img {
+    filter: blur(0);
+    transform: scale(1.0);
+}
+
+/* オプション: Diamond TIER だけは最初から少し見えていてもいい、などの演出も可能 */
+/* .badge-Diamond + .visual-frame img { filter: blur(10px); } */
+        
         .analysis-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); border-color: #adb5bd; }
 
         .visual-frame { width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #000; }
