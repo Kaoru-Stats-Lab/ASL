@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASL v3.6.0 | Adult Stats Lab</title>
+    <title>ASL v3.7.3 | Adult Stats Lab</title>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-606GEFXTW4');</script>
     <style>
@@ -62,41 +62,64 @@
         if (localStorage.getItem('asl_unlocked') === 'true') document.body.classList.add('unlocked');
         const p = window.location.pathname.split('/').filter(Boolean).pop();
         if (!p || p === 'p') return;
-        document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;color:#CCC;">LOADING ARCHIVE...</div>`;
+        document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;color:#CCC;">ACCESSING ARCHIVE...</div>`;
         try {
             const res = await fetch(`${CONFIG.API}?id=${p}`, { cache: "default" });
             const item = await res.json();
-            if (!item || item.error) throw new Error();
+            
+            // 🚀 EXPOSE_SAVED (AI拒絶) 時の救済
+            if (!item || item.error === "EXPOSE_SAVED" || !item.NARRATIVE_ALL) {
+                fetch(`${CONFIG.API}?id=${p}&mode=alert&ua=${encodeURIComponent(navigator.userAgent)}`);
+                renderExposeMode(item, p);
+                return;
+            }
             renderDetail(item);
-        } catch (e) { document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;"><h2>Not Found</h2><p>${p}</p></div>`; }
+        } catch (e) { document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;"><h2>SYSTEM_ERROR</h2><p>${p}</p></div>`; }
+    }
+
+    function renderExposeMode(item, id) {
+        renderDetail(item);
+        const reportTitle = document.querySelector('.report-title');
+        const reportBody = document.querySelector('.report-body');
+        if (reportTitle) reportTitle.innerHTML = `情緒的共鳴分析 <span style="font-size:0.7rem; color:#999; font-weight:normal;">/ Emotional Resonance Analysis</span>`;
+        if (reportBody) {
+            reportBody.innerHTML = `
+                <div style="background:#F9F9F9; color:#666; font-weight:bold; border:1px solid #EEE; padding:20px; border-radius:12px; font-size:0.85rem; line-height:1.8;">
+                    <div style="color:var(--accent); margin-bottom:10px;">【解析ステータス：再構成中】<br><span style="font-size:0.7rem; opacity:0.8;">Status: Analysis Reconstructing</span></div>
+                    本個体の詳細な情緒・ストーリー分析は現在、より高度な多角解析プロセスに移行しています。<br>
+                    <span style="font-size:0.75rem; color:#999; font-weight:normal; display:block; margin-bottom:10px;">The detailed narrative profile is currently undergoing an advanced analysis process.</span>
+                    データの整合性を確認し、最適な表現でレポートを再構築しておりますので、公開まで今しばらくお待ちください。<br>
+                    <span style="font-size:0.75rem; color:#999; font-weight:normal; display:block;">Reconstructing report for data integrity. Please wait.</span>
+                </div>`;
+        }
     }
 
     function renderDetail(item) {
-        const imgs = (item.IMAGE_URLS || "").split(',').filter(u => u.trim());
-        const t = parseFloat(item.T_SCORE || 0).toFixed(1);
+        const imgs = (item && item.IMAGE_URLS ? item.IMAGE_URLS.split(',') : []).filter(u => u.trim());
+        const t = parseFloat(item ? item.T_SCORE : 0).toFixed(1);
         const col = t >= 60 ? '#66CC33' : (t >= 45 ? '#FFCC33' : '#FF3333');
-        const tier = item.TIER || "Iron";
+        const tier = item ? item.TIER : "Iron";
         document.getElementById('app').innerHTML = `
             <div class="app-container">
                 <div class="main-column">
                     <div class="hero blur-target"><div class="carousel">${imgs.map(s => `<div class="carousel-item"><img src="${s.trim()}" loading="lazy"></div>`).join('')}</div></div>
                     <div style="padding:20px;">
                         <div class="tax-group">
-                            ${(item.ACTRESS_NAME||"").split(',').map((n,i)=>`<a href="/?a=${(item.ACTRESS_ID||"").split(',')[i]}" class="tax-tag" style="color:var(--accent);border-color:var(--accent);">👤 ${n.trim()}</a>`).join('')}
-                            <a href="/?s=${item.MAKER_ID}" class="tax-tag">🏢 ${item.MAKER}</a>
+                            ${item && item.ACTRESS_NAME ? item.ACTRESS_NAME.split(',').map((n,i)=>`<a href="/?a=${item.ACTRESS_ID.split(',')[i]}" class="tax-tag" style="color:var(--accent);border-color:var(--accent);">👤 ${n.trim()}</a>`).join('') : ''}
+                            <a href="/?s=${item ? item.MAKER_ID : ''}" class="tax-tag">🏢 ${item ? item.MAKER : ''}</a>
                         </div>
                         <div class="bio-section">
-                            <div class="bio-item"><span class="bio-label">BUST / CUP</span><span class="bio-val">${fmt(item.BUST)}</span> ${fmt(item.CUP)!=='N/A'?`<span style="background:var(--accent);color:#FFF;padding:1px 4px;border-radius:3px;font-size:0.7rem;">${item.CUP}</span>`:''}</div>
-                            <div class="bio-item"><span class="bio-label">WAIST / HIP</span><span class="bio-val">${fmt(item.WAIST)} / ${fmt(item.HIP)}</span></div>
-                            <div class="bio-item"><span class="bio-label">HEIGHT</span><span class="bio-val">${fmt(item.HEIGHT)}${fmt(item.HEIGHT)!=='N/A'?'cm':''}</span></div>
+                            <div class="bio-item"><span class="bio-label">BUST / CUP</span><span class="bio-val">${fmt(item?item.BUST:'')}</span> ${item&&item.CUP&&item.CUP!=='N/A'?`<span style="background:var(--accent);color:#FFF;padding:1px 4px;border-radius:3px;font-size:0.7rem;">${item.CUP}</span>`:''}</div>
+                            <div class="bio-item"><span class="bio-label">WAIST / HIP</span><span class="bio-val">${fmt(item?item.WAIST:'')} / ${fmt(item?item.HIP:'')}</span></div>
+                            <div class="bio-item"><span class="bio-label">HEIGHT</span><span class="bio-val">${fmt(item?item.HEIGHT:'')}${item&&item.HEIGHT!=='N/A'?'cm':''}</span></div>
                         </div>
                         <div class="eeat-box">
-                            <div><span class="bio-label">RELEASE / RUNTIME</span><div class="bio-val" style="font-size:0.8rem;">${(item.RELEASE_DATE||"").split(' ')[0]} / ${item.RUNTIME}m</div></div>
-                            <div style="text-align:right;"><span class="bio-label">PUBLIC AVG (${parseInt(item.N_COUNT).toLocaleString()} Samples)</span><div class="bio-val" style="color:var(--accent);">★${parseFloat(item.SW_AVG).toFixed(1)}</div></div>
+                            <div><span class="bio-label">RELEASE / RUNTIME</span><div class="bio-val" style="font-size:0.8rem;">${item&&item.RELEASE_DATE?item.RELEASE_DATE.split(' ')[0]:'N/A'} / ${item?item.RUNTIME:''}m</div></div>
+                            <div style="text-align:right;"><span class="bio-label">PUBLIC AVG (${item?parseInt(item.N_COUNT).toLocaleString():0} Samples)</span><div class="bio-val" style="color:var(--accent);">★${item?parseFloat(item.SW_AVG).toFixed(1):0}</div></div>
                         </div>
                         <div class="report-card">
-                            <div class="report-title" style="font-size:1rem;font-weight:900;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:15px;">EMOTIONAL RESONANCE ANALYSIS</div>
-                            <div class="report-body">${item.NARRATIVE_ALL || ''}</div>
+                            <div class="report-title" style="font-size:1rem;font-weight:900;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:15px;">情緒的共鳴分析 <span style="font-size:0.7rem; color:#999; font-weight:normal;">/ Emotional Resonance Analysis</span></div>
+                            <div class="report-body">${item ? item.NARRATIVE_ALL : ''}</div>
                         </div>
                     </div>
                 </div>
@@ -109,9 +132,9 @@
                         </div>
                         <div class="stat-card">
                             <div style="font-size:0.65rem;font-weight:900;color:#999;margin-bottom:10px;text-align:left;">ANALYTICS 6-AXIS</div>
-                            ${['VIS','STY','TEC','HEA','RAR','IMP'].map(k=>`<div class="stat-row"><span>${k}</span> ${getGauge(item[k])} <span style="margin-left:auto">${item[k]||0}</span></div>`).join('')}
+                            ${['VIS','STY','TEC','HEA','RAR','IMP'].map(k=>`<div class="stat-row"><span>${k}</span> ${getGauge(item?item[k]:0)} <span style="margin-left:auto">${item?item[k]:0}</span></div>`).join('')}
                         </div>
-                        <div class="footer-nav"><a href="/" class="nav-btn btn-sub">BACK</a><a href="${item.SCRAPE_SOURCE}" target="_blank" class="nav-btn btn-main">CHECK DETAILS</a></div>
+                        <div class="footer-nav"><a href="/" class="nav-btn btn-sub">BACK</a><a href="${item?item.SCRAPE_SOURCE:''}" target="_blank" class="nav-btn btn-main">CHECK DETAILS</a></div>
                     </div>
                 </div>
             </div>`;
