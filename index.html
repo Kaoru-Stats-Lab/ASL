@@ -5,61 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASL | Analysis System Laboratory</title>
     <style>
-        /* ASL Laboratory Style - 基本レイアウト */
-        body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background: #fcfcfc; color: #333; }
-        header { background: #1a1a1a; color: #fff; padding: 20px; text-align: center; font-weight: bold; letter-spacing: 2px; }
+        /* 研究所専用・高密度レイアウト */
+        body { margin: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8f9fa; color: #212529; }
+        header { background: #000; color: #fff; padding: 15px; text-align: center; font-weight: 900; letter-spacing: 0.2em; font-size: 0.9rem; position: sticky; top: 0; z-index: 100; }
         
-        /* カードグリッド */
         #asl-lp-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 30px;
-            padding: 30px;
-            max-width: 1400px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            padding: 25px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
-        /* 鑑定書カードデザイン */
         .analysis-card {
             background: #fff;
-            border: 1px solid #eee;
-            border-radius: 4px;
-            overflow: hidden;
-            transition: 0.3s ease;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
-        .analysis-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .analysis-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); border-color: #adb5bd; }
 
-        .visual-frame { width: 100%; aspect-ratio: 16/9; overflow: hidden; background: #000; }
-        .visual-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .visual-frame { width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #000; }
+        .visual-frame img { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; transition: 0.3s; }
+        .analysis-card:hover .visual-frame img { opacity: 1; }
 
-        .analysis-data { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .analysis-data { padding: 18px; flex-grow: 1; display: flex; flex-direction: column; }
         
-        .data-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .badge-Diamond { color: #00bcd4; font-weight: bold; font-size: 0.8rem; border: 1px solid; padding: 2px 6px; }
-        .badge-Platinum { color: #9c27b0; font-weight: bold; font-size: 0.8rem; border: 1px solid; padding: 2px 6px; }
-        .badge-Gold { color: #ff9800; font-weight: bold; font-size: 0.8rem; border: 1px solid; padding: 2px 6px; }
-        .t-score { font-weight: bold; font-family: serif; color: #111; }
+        .data-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .badge-Diamond { color: #00d1ff; font-weight: 800; font-size: 0.7rem; border: 1px solid #00d1ff; padding: 2px 8px; border-radius: 2px; }
+        .badge-Platinum { color: #d63384; font-weight: 800; font-size: 0.7rem; border: 1px solid #d63384; padding: 2px 8px; border-radius: 2px; }
+        .badge-Gold { color: #ffc107; font-weight: 800; font-size: 0.7rem; border: 1px solid #ffc107; padding: 2px 8px; border-radius: 2px; }
+        .t-score { font-weight: 900; font-size: 1.1rem; color: #000; font-style: italic; }
 
-        .subject-name { font-size: 1.2rem; margin: 5px 0 10px 0; font-weight: bold; color: #111; }
+        .subject-name { font-size: 1.25rem; margin: 0 0 12px 0; font-weight: 800; letter-spacing: -0.02em; }
 
-        .taxonomy-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
-        .tag { font-size: 0.7rem; color: #666; background: #f0f0f0; padding: 3px 8px; border-radius: 2px; }
+        .taxonomy-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+        .tag { font-size: 0.65rem; color: #495057; background: #e9ecef; padding: 3px 10px; border-radius: 3px; font-weight: 600; }
 
         .narrative-peek { 
             font-size: 0.75rem; 
-            color: #888; 
-            line-height: 1.5; 
-            border-top: 1px dashed #eee; 
-            padding-top: 10px; 
+            color: #6c757d; 
+            line-height: 1.6; 
+            border-top: 1px solid #f1f3f5; 
+            padding-top: 12px; 
             margin-top: auto;
+            font-style: italic;
         }
-        .label { font-weight: bold; color: #aaa; margin-right: 5px; }
+        .label { font-weight: bold; color: #adb5bd; margin-right: 6px; font-style: normal; font-size: 0.65rem; }
 
-        .loading { text-align: center; padding: 100px; color: #999; letter-spacing: 4px; }
+        .loading-screen { grid-column: 1 / -1; text-align: center; padding: 100px; color: #adb5bd; font-weight: bold; letter-spacing: 0.5em; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -67,25 +66,25 @@
     <header>ANALYSIS SYSTEM LABORATORY</header>
 
     <main id="asl-lp-grid">
-        <div class="loading">CONNECTING TO DATABASE...</div>
+        <div class="loading-screen">INITIALIZING PROTOCOL...</div>
     </main>
 
     <script src="js/protocol.js"></script>
     <script src="js/lp-engine.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', async () => {
+            const grid = document.getElementById('asl-lp-grid');
             try {
-                const res = await fetch('all_index.json');
-                if (!res.ok) throw new Error('Network Error');
+                // キャッシュ回避のためにタイムスタンプを付与
+                const res = await fetch('all_index.json?v=' + new Date().getTime());
+                if (!res.ok) throw new Error();
                 const data = await res.json();
                 
-                // 描画エンジン起動
                 if (typeof renderASLLandingPage === 'function') {
                     renderASLLandingPage(data);
                 }
             } catch (e) {
-                document.getElementById('asl-lp-grid').innerHTML = 
-                    `<div class="loading">ERROR: PROTOCOL TIMEOUT (all_index.json not found)</div>`;
+                grid.innerHTML = `<div class="loading-screen">ERROR: DATA_FETCH_FAILED (Check all_index.json)</div>`;
             }
         });
     </script>
