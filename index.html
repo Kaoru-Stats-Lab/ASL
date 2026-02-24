@@ -12,108 +12,114 @@
       gtag('config', 'G-606GEFXTW4');
     </script>
     <style>
-        body { background-color: #000; color: #fff; font-family: sans-serif; margin: 0; overflow-x: hidden; }
-        .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
-        .shield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; }
-        .shield.active { opacity: 0; pointer-events: none; }
-        .shield-btn { background: #ff4757; color: white; border: none; padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: bold; }
-        .carousel { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 20px; scroll-snap-type: x mandatory; }
-        .carousel img { height: 400px; scroll-snap-align: start; border-radius: 8px; }
-        .content-card { background: #1a1a1a; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        h1 { font-size: 1.5rem; margin-bottom: 10px; }
-        .meta { color: #aaa; font-size: 0.9rem; margin-bottom: 15px; }
-        .insight { border-left: 4px solid #ff4757; padding-left: 15px; font-style: italic; color: #ddd; }
+        body { background-color: #000; color: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; overflow-x: hidden; }
+        .container { padding: 20px; max-width: 1000px; margin: 0 auto; }
+        .shield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        .shield.hidden { opacity: 0; pointer-events: none; }
+        .shield-btn { background: #ff4757; color: white; border: none; padding: 15px 40px; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4); }
+        .carousel { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        .carousel img { height: 450px; border-radius: 12px; scroll-snap-align: start; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .detail-card { background: #111; border: 1px solid #222; border-radius: 20px; padding: 30px; margin-top: 20px; }
+        h1 { font-size: 1.8rem; line-height: 1.4; margin-top: 0; color: #fff; }
+        .meta-info { color: #888; margin-bottom: 20px; font-size: 0.95rem; display: flex; gap: 20px; flex-wrap: wrap; }
+        .tag { background: #222; padding: 4px 12px; border-radius: 4px; color: #ff4757; font-weight: bold; }
+        .insight-box { border-left: 4px solid #ff4757; padding: 5px 20px; background: rgba(255, 71, 87, 0.05); margin: 25px 0; font-style: italic; color: #eee; font-size: 1.1rem; }
+        .desc-text { color: #ccc; line-height: 1.8; font-size: 1rem; }
+        .loading { text-align: center; padding: 50px; color: #555; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
 <div id="shield" class="shield">
-    <button class="shield-btn" onclick="toggleShield()">SHIELD ACTIVE (CLICK TO UNLOCK)</button>
+    <button class="shield-btn" onclick="unlock()">SHIELD ACTIVE (CLICK TO UNLOCK)</button>
 </div>
 
-<div class="container" id="app">
-    <div id="content-area">Loading...</div>
+<div class="container">
+    <div id="main-content" class="loading">Loading data from spreadsheet...</div>
 </div>
 
 <script>
     const CONFIG = {
-        // 先ほど成功した最新のGAS URL
+        // あなたが提供した最新のGAS URL
         API: 'https://script.google.com/macros/s/AKfycbwpjpE95dwEeMB3VSkBdGiP38PTLtdtU_FCJ1Eia8pTg3sDLX75C5vMvH67bCIAapi-TQ/exec'
     };
 
-    function toggleShield() {
-        document.getElementById('shield').classList.add('active');
-        gtag('event', 'shield_unlock');
+    function unlock() {
+        document.getElementById('shield').classList.add('hidden');
+        gtag('event', 'shield_unlock', { 'event_category': 'engagement' });
     }
 
-    async function init() {
-        // 現在のURLパスを取得し、余計な空白や末尾のスラッシュを削除
-        const path = window.location.pathname.replace(/\/$/, "");
-        
-        // パスを分割してIDを抽出 (例: /p/bare00008 -> bare00008)
-        const parts = path.split('/');
-        const productId = path.includes('/p/') ? parts[parts.indexOf('p') + 1] : null;
-        
-        const contentArea = document.getElementById('content-area');
+    async function fetchData() {
+        const path = window.location.pathname;
+        const productId = path.includes('/p/') ? path.split('/').filter(Boolean).pop() : null;
+        const contentArea = document.getElementById('main-content');
 
         try {
-            let fetchUrl = CONFIG.API;
-            // IDが存在する場合のみ、クエリパラメータを付与
-            if (productId) {
-                fetchUrl += (fetchUrl.includes('?') ? '&' : '?') + `id=${productId}`;
-            }
+            // URLパラメータを正しく構築
+            let url = CONFIG.API;
+            if (productId) url += `?id=${productId}`;
 
-            console.log("Fetching from:", fetchUrl); // デバッグ用
-
-            const response = await fetch(fetchUrl);
+            const response = await fetch(url);
             const data = await response.json();
 
-            // 取得データが配列かオブジェクトかで描画を分ける
+            // 1件データ（詳細）か複数データ（リスト）か判定
             if (productId && !Array.isArray(data)) {
                 renderDetail(data);
             } else {
                 renderList(Array.isArray(data) ? data : [data]);
             }
         } catch (error) {
-            contentArea.innerHTML = 'データの読み込みに失敗しました。詳細はコンソールを確認してください。';
-            console.error("Fetch Error:", error);
+            contentArea.innerHTML = '<div style="color:#ff4757">Failed to load data. Please check GAS settings.</div>';
+            console.error('Fetch Error:', error);
         }
     }
 
     function renderDetail(item) {
         if (item.error) {
-            document.getElementById('content-area').innerHTML = '作品が見つかりませんでした。';
+            document.getElementById('main-content').innerHTML = 'Product not found.';
             return;
         }
 
+        // 画像URLを分割してカルーセル作成
         const images = item.IMAGE_URLS ? item.IMAGE_URLS.split(',') : [];
-        const carouselHtml = images.map(img => `<img src="${img.trim()}" alt="gallery">`).join('');
+        const carouselHtml = images.map(src => `<img src="${src.trim()}" loading="lazy">`).join('');
 
-        document.getElementById('content-area').innerHTML = `
+        document.getElementById('main-content').innerHTML = `
             <div class="carousel">${carouselHtml}</div>
-            <div class="content-card">
+            <div class="detail-card">
+                <div class="meta-info">
+                    <span>ID: <strong>${item.CID}</strong></span>
+                    <span class="tag">${item.TIER || 'Standard'}</span>
+                    <span>Actress: <strong>${item.ACTRESS_NAME}</strong></span>
+                </div>
                 <h1>${item.TITLE}</h1>
-                <div class="meta">女優: ${item.ACTRESS_NAME} | ID: ${item.CID} | スコア: ${item.T_SCORE}</div>
-                <div class="insight">${item.INSIGHT_TEXT || '解析中...'}</div>
-                <p style="margin-top:20px; color:#ccc;">${item.META_DESC || ''}</p>
+                <div class="insight-box">${item.INSIGHT_TEXT || 'No insight available.'}</div>
+                <div class="desc-text">${item.META_DESC || ''}</div>
+                <div style="margin-top:40px;">
+                    <a href="/" style="color:#888; text-decoration:none;">← Back to Home</a>
+                </div>
             </div>
-            <a href="/" style="color:#ff4757; text-decoration:none;">← トップへ戻る</a>
         `;
-        document.title = `${item.TITLE} | ASL`;
+        document.title = `${item.TITLE} | ASL v2.7.6`;
     }
 
-    function renderList(data) {
-        const listHtml = data.map(item => `
-            <div class="content-card" onclick="location.href='/p/${item.CID}'" style="cursor:pointer;">
-                <img src="${item.IMAGE_URLS.split(',')[0]}" style="width:100%; border-radius:8px; margin-bottom:10px;">
-                <h3>${item.TITLE}</h3>
-                <p>${item.ACTRESS_NAME}</p>
+    function renderList(list) {
+        const cards = list.map(item => `
+            <div class="detail-card" style="cursor:pointer; margin-bottom:20px;" onclick="location.href='/p/${item.CID}'">
+                <div style="display:flex; gap:20px;">
+                    <img src="${item.IMAGE_URLS.split(',')[0]}" style="width:120px; height:160px; object-fit:cover; border-radius:8px;">
+                    <div>
+                        <h3 style="margin:0 0 10px 0;">${item.TITLE}</h3>
+                        <p style="color:#888;">${item.ACTRESS_NAME}</p>
+                    </div>
+                </div>
             </div>
         `).join('');
-        document.getElementById('content-area').innerHTML = listHtml;
+        document.getElementById('main-content').innerHTML = cards;
     }
 
-    window.onload = init;
+    // 起動
+    fetchData();
 </script>
 
 </body>
