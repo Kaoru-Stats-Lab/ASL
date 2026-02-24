@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ASL v3.5.7 | Adult Stats Lab</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASL v3.5.8 | Adult Stats Lab</title>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
     <script>
       window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);}
@@ -11,65 +11,44 @@
     </script>
     <style>
         :root { --accent: #FF4757; --bg: #FFFFFF; --text-main: #1A1A1A; --text-sub: #666; --border: #EEEEEE; --content-width: 1140px; }
-        body { background: var(--bg); color: var(--text-main); font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 0; line-height: 1.6; -webkit-tap-highlight-color: transparent; }
-        
-        /* 認証シールド */
+        body { background: var(--bg); color: var(--text-main); font-family: -apple-system, system-ui, sans-serif; margin: 0; line-height: 1.6; }
+        .blur-target { filter: blur(35px); transition: filter 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        body.unlocked .blur-target { filter: blur(0); }
         .shield-ui { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
         body.unlocked .shield-ui { display: none; }
-        .blur-target { filter: blur(35px); transition: filter 0.5s ease; }
-        body.unlocked .blur-target { filter: blur(0); }
-        .unlock-btn { background: var(--text-main); color: #FFF; border: none; padding: 18px 36px; border-radius: 12px; font-weight: 900; cursor: pointer; letter-spacing: 1px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-
-        /* レイアウト */
-        .app-container { display: flex; flex-direction: column; width: 100%; }
+        .unlock-btn { background: var(--text-main); color: #FFF; border: none; padding: 20px 40px; border-radius: 12px; font-weight: 900; cursor: pointer; letter-spacing: 2px; }
+        .app-container { display: flex; flex-direction: column; width: 100%; margin: 0 auto; }
         @media (min-width: 768px) {
-            .app-container { flex-direction: row; max-width: var(--content-width); gap: 40px; padding: 40px 20px; margin: 0 auto; }
+            .app-container { flex-direction: row; max-width: var(--content-width); gap: 50px; padding: 40px 20px; }
             .main-column { flex: 1; min-width: 0; }
-            .side-column { width: 320px; position: sticky; top: 40px; height: fit-content; }
+            .side-column { width: 340px; position: sticky; top: 40px; height: fit-content; }
         }
-
-        /* ヒーロー & カルーセル */
-        .hero { aspect-ratio: 16/9; background: #F8F8F8; overflow: hidden; border-radius: 0; }
-        @media (min-width: 768px) { .hero { border-radius: 12px; } }
+        .hero { aspect-ratio: 16/9; background: #F8F8F8; overflow: hidden; border-radius: 12px; }
         .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; scrollbar-width: none; }
-        .carousel-item { flex: 0 0 100%; height: 100%; scroll-snap-align: center; }
+        .carousel-item { flex: 0 0 100%; scroll-snap-align: center; }
         .carousel-item img { width: 100%; height: 100%; object-fit: contain; }
-
-        /* 格付け・スコア */
-        .tier-emblem { display: inline-block; padding: 6px 16px; border-radius: 50px; font-weight: 900; font-size: 0.7rem; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; color: #FFF; }
-        .tier-Diamond { background: linear-gradient(135deg, #00acc1, #00838f); }
-        .tier-Platinum { background: linear-gradient(135deg, #9e9e9e, #616161); }
-        .tier-Gold { background: linear-gradient(135deg, #fbc02d, #f57f17); }
-        .tier-Silver { background: linear-gradient(135deg, #bdbdbd, #757575); }
-        .tier-Bronze { background: linear-gradient(135deg, #a1887f, #5d4037); }
-        
-        .score-val { font-size: 3rem; font-weight: 900; line-height: 1; }
-        .meter-svg { transform: rotate(-90deg); }
-
-        /* コンテンツエリア */
+        .tier-emblem { display: inline-block; padding: 6px 18px; border-radius: 50px; font-weight: 900; font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; color: #FFF; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .tier-Diamond { background: linear-gradient(135deg, #e0f7fa, #00acc1); }
+        .tier-Platinum { background: linear-gradient(135deg, #e5e4e2, #7d7d7d); }
+        .tier-Gold { background: linear-gradient(135deg, #f1c40f, #d4af37); }
+        .tier-Silver { background: linear-gradient(135deg, #bdc3c7, #7f8c8d); }
+        .tier-Bronze { background: linear-gradient(135deg, #cd7f32, #8b4513); }
         .tax-group { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
-        .tax-tag { padding: 4px 12px; font-size: 0.72rem; font-weight: bold; border-radius: 20px; border: 1px solid var(--border); text-decoration: none; color: var(--text-sub); }
-        
-        .bio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #EEE; border: 1px solid #EEE; border-radius: 12px; overflow: hidden; margin: 15px 0; }
-        .bio-item { background: #FFF; padding: 12px 5px; text-align: center; }
-        .bio-label { font-size: 0.55rem; color: #AAA; font-weight: bold; display: block; margin-bottom: 2px; }
-        .bio-val { font-size: 0.9rem; font-weight: 900; font-family: ui-monospace, monospace; }
-
-        .report-card { background: #FFF; border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-top: 20px; }
-        .report-title { font-size: 0.9rem; font-weight: 900; border-bottom: 2px solid #111; padding-bottom: 8px; margin-bottom: 12px; }
-        .report-body { font-size: 0.9rem; line-height: 1.8; color: #333; white-space: pre-wrap; text-align: justify; }
-
+        .tax-tag { padding: 4px 12px; font-size: 0.72rem; font-weight: bold; border-radius: 20px; border: 1px solid var(--border); text-decoration: none; color: var(--text-sub); background: #FDFDFD; }
+        .bio-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #F9F9F9; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #EEE; }
+        .bio-label { font-size: 0.6rem; color: #999; font-weight: bold; display: block; }
+        .bio-val { font-size: 0.95rem; font-weight: 900; font-family: monospace; }
+        .report-card { background: #FFF; border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-top: 20px; }
+        .report-body { font-size: 0.95rem; line-height: 1.8; color: #333; white-space: pre-wrap; text-align: justify; }
+        .meter-box { position: relative; width: 140px; height: 140px; margin: 0 auto 20px; }
+        .score-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-val { font-size: 2.2rem; font-weight: 900; line-height: 1; }
         .stat-card { background: #FAFAFA; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
-        .stat-row { font-family: ui-monospace, monospace; font-size: 11px; display: flex; align-items: center; margin-bottom: 6px; }
+        .stat-row { font-family: monospace; font-size: 11px; display: flex; align-items: center; margin-bottom: 6px; }
         .gauge-f { color: var(--accent); } .gauge-e { color: #DDD; }
-
-        /* 画面表示切り替え用 */
-        .screen-msg { text-align: center; padding: 120px 20px; color: #EEE; font-weight: 900; font-size: 2.5rem; letter-spacing: 4px; }
-
-        /* スマホ・固定ナビ */
-        .footer-nav { display: flex; gap: 10px; padding: 15px 20px; }
+        .footer-nav { display: flex; gap: 10px; padding: 20px 0; }
         @media (max-width: 767px) {
-            .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #FFF; border-top: 1px solid #EEE; padding-bottom: calc(15px + env(safe-area-inset-bottom)); z-index: 1000; box-sizing: border-box; }
+            .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #FFF; padding: 15px 20px calc(15px + env(safe-area-inset-bottom)); border-top: 1px solid #EEE; z-index: 1000; box-sizing: border-box; }
             .app-container { padding-bottom: 120px; }
         }
         .nav-btn { flex: 1; padding: 16px; border-radius: 10px; text-align: center; font-weight: 800; text-decoration: none; font-size: 14px; }
@@ -89,32 +68,22 @@
     async function init() {
         if (localStorage.getItem('asl_unlocked') === 'true') document.body.classList.add('unlocked');
         
-        // 🚀 高度なID解析ロジック
-        // パスを分解し、ゴミ(ピリオド、末尾ハイフン等)を除去して純粋な英数字を抽出
-        const rawSegments = window.location.pathname.split('/').filter(Boolean);
-        let productId = "";
-        
-        for (let i = rawSegments.length - 1; i >= 0; i--) {
-            const seg = rawSegments[i].replace(/[^a-zA-Z0-9]/g, "");
-            if (seg && seg !== "p") { productId = seg; break; }
-        }
+        // 🚀 URLからIDを抽出 (pを除外、英数字以外を削除して純粋なIDを取得)
+        const segments = window.location.pathname.split('/').filter(s => s && s !== 'p');
+        let productId = segments.length > 0 ? segments[segments.length - 1].replace(/[^a-zA-Z0-9]/g, "") : "";
 
         if (!productId) {
-            document.getElementById('app').innerHTML = '<div class="screen-msg">ARCHIVE LIST</div>';
+            document.getElementById('app').innerHTML = '<div style="text-align:center; padding:150px 20px; color:#DDD; font-weight:900; font-size:3rem; letter-spacing:5px;">ARCHIVE LIST</div>';
             return;
         }
 
         try {
             const res = await fetch(`${CONFIG.API}?id=${productId}`, { cache: "no-store" });
             const item = await res.json();
-            if (!item || !item.CID || item.error) throw new Error("404");
+            if (!item || !item.CID || item.error) throw new Error();
             renderDetail(item);
         } catch (e) {
-            document.getElementById('app').innerHTML = `
-                <div class="screen-msg" style="font-size:1.5rem; color:#AAA;">
-                    ANALYSIS NOT FOUND<br><span style="font-size:0.8rem; letter-spacing:1px;">ID: ${productId}</span>
-                    <div style="margin-top:30px;"><a href="/" class="nav-btn btn-sub" style="display:inline-block; padding:10px 20px;">BACK HOME</a></div>
-                </div>`;
+            document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;"><h2>DATA NOT FOUND</h2><p style="color:#AAA;">ID: ${productId}</p><a href="/" style="color:var(--accent);text-decoration:none;font-weight:bold;">HOME</a></div>`;
         }
     }
 
@@ -135,28 +104,27 @@
                             ${(item.ACTRESS_NAME||"").split(',').map((n,i)=>`<a href="/?a=${(item.ACTRESS_ID||"").split(',')[i]}" class="tax-tag" style="color:var(--accent); border-color:var(--accent);">👤 ${n.trim()}</a>`).join('')}
                             <a href="/?s=${item.MAKER_ID}" class="tax-tag">🏢 ${item.MAKER}</a>
                         </div>
-                        <div class="bio-grid">
-                            <div class="bio-item"><span class="bio-label">BUST / CUP</span><span class="bio-val">${fmt(item.BUST)}</span> ${fmt(item.CUP)!=='N/A'?`<span style="background:var(--accent);color:#FFF;padding:1px 3px;border-radius:3px;font-size:0.6rem;">${item.CUP}</span>`:''}</div>
+                        <div class="bio-section">
+                            <div class="bio-item"><span class="bio-label">BUST / CUP</span><span class="bio-val">${fmt(item.BUST)}</span> ${fmt(item.CUP)!=='N/A'?`<span style="background:var(--accent);color:#FFF;padding:1px 4px;border-radius:3px;font-size:0.7rem;">${item.CUP}</span>`:''}</div>
                             <div class="bio-item"><span class="bio-label">WAIST / HIP</span><span class="bio-val">${fmt(item.WAIST)} / ${fmt(item.HIP)}</span></div>
                             <div class="bio-item"><span class="bio-label">HEIGHT</span><span class="bio-val">${fmt(item.HEIGHT)}${fmt(item.HEIGHT)!=='N/A'?'cm':''}</span></div>
                         </div>
-                        <div style="background:#FFF; border:1px dashed #DDD; padding:12px; border-radius:12px; margin:15px 0; display:flex; justify-content:space-between; align-items:center;">
-                            <div><span class="bio-label">RELEASE / RUNTIME</span><div class="bio-val" style="font-size:0.8rem;">${(item.RELEASE_DATE||"").split(' ')[0]} / ${item.RUNTIME}m</div></div>
-                            <div style="text-align:right;"><span class="bio-label">SAMPLE COUNT</span><div class="bio-val" style="color:var(--accent);">${parseInt(item.N_COUNT||0).toLocaleString()} Users</div></div>
-                        </div>
                         <div class="report-card">
-                            <div class="report-title">EMOTIONAL RESONANCE ANALYSIS</div>
-                            <div class="report-body">${item.NARRATIVE_ALL || 'No data.'}</div>
+                            <div style="font-size:1rem; font-weight:900; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:15px;">ANALYSIS REPORT</div>
+                            <div class="report-body">${item.NARRATIVE_ALL || 'No analysis data.'}</div>
                         </div>
                     </div>
                 </div>
                 <div class="side-column">
                     <div style="text-align:center; padding: 20px 0;">
                         <div class="tier-emblem tier-${tier}">${tier} CLASS</div>
-                        <div class="score-val" style="color:${scoreColor}">${tScore}</div>
-                        <div style="font-size:0.6rem; color:#AAA; font-weight:bold; letter-spacing:1px; margin-bottom:25px;">T-SCORE (METASCORE)</div>
+                        <div class="meter-box">
+                            <div class="score-inner"><span class="score-val" style="color:${scoreColor}">${tScore}</span><span class="bio-label">T-SCORE</span></div>
+                            <svg width="140" height="140"><circle cx="70" cy="70" r="64" fill="none" stroke="#F0F0F0" stroke-width="10" /><circle cx="70" cy="70" r="64" fill="none" stroke="${scoreColor}" stroke-width="10" stroke-dasharray="402" stroke-dashoffset="${402-(402*tScore/100)}" stroke-linecap="round" style="transition:stroke-dashoffset 1.5s ease-out" /></svg>
+                        </div>
                         <div class="stat-card">
-                            ${['VIS','STY','TEC','HEA','RAR','IMP'].map(k=>`<div class="stat-row"><span style="width:35px; color:#AAA;">${k}</span> ${getGauge(item[k])} <span style="margin-left:auto">${item[k]||0}</span></div>`).join('')}
+                            <div style="font-size:0.65rem;font-weight:900;color:#999;margin-bottom:10px;text-align:left;">ANALYTICS 6-AXIS</div>
+                            ${['VIS','STY','TEC','HEA','RAR','IMP'].map(k=>`<div class="stat-row"><span style="width:40px; color:#AAA;">${k}</span> ${getGauge(item[k])} <span style="margin-left:auto">${item[k]||0}</span></div>`).join('')}
                         </div>
                         <div class="footer-nav">
                             <a href="/" class="nav-btn btn-sub">BACK</a>
@@ -166,7 +134,6 @@
                 </div>
             </div>
         `;
-        const meta = document.createElement('meta'); meta.name = "description"; meta.content = item.META_DESC || ""; document.head.appendChild(meta);
     }
     init();
 </script>
