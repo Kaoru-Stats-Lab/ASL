@@ -47,25 +47,36 @@
     }
 
     async function init() {
-        const path = window.location.pathname;
-        const productId = path.includes('/p/') ? path.split('/').pop() : null;
+        // 現在のURLパスを取得し、余計な空白や末尾のスラッシュを削除
+        const path = window.location.pathname.replace(/\/$/, "");
+        
+        // パスを分割してIDを抽出 (例: /p/bare00008 -> bare00008)
+        const parts = path.split('/');
+        const productId = path.includes('/p/') ? parts[parts.indexOf('p') + 1] : null;
+        
         const contentArea = document.getElementById('content-area');
 
         try {
             let fetchUrl = CONFIG.API;
-            if (productId) fetchUrl += `?id=${productId}`;
+            // IDが存在する場合のみ、クエリパラメータを付与
+            if (productId) {
+                fetchUrl += (fetchUrl.includes('?') ? '&' : '?') + `id=${productId}`;
+            }
+
+            console.log("Fetching from:", fetchUrl); // デバッグ用
 
             const response = await fetch(fetchUrl);
             const data = await response.json();
 
-            if (productId) {
+            // 取得データが配列かオブジェクトかで描画を分ける
+            if (productId && !Array.isArray(data)) {
                 renderDetail(data);
             } else {
-                renderList(data);
+                renderList(Array.isArray(data) ? data : [data]);
             }
         } catch (error) {
-            contentArea.innerHTML = 'データの読み込みに失敗しました。';
-            console.error(error);
+            contentArea.innerHTML = 'データの読み込みに失敗しました。詳細はコンソールを確認してください。';
+            console.error("Fetch Error:", error);
         }
     }
 
