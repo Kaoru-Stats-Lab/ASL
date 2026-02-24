@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASL v3.5.5 | Adult Stats Lab</title>
+    <title>ASL v3.5.6 | Adult Stats Lab</title>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
     <script>
       window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);}
@@ -12,11 +12,11 @@
     <style>
         :root { --accent: #FF4757; --bg: #FFFFFF; --text-main: #1A1A1A; --text-sub: #666; --border: #EEEEEE; --content-width: 1140px; }
         body { background: var(--bg); color: var(--text-main); font-family: -apple-system, system-ui, sans-serif; margin: 0; line-height: 1.6; }
-        .blur-target { filter: blur(35px); transition: filter 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        .blur-target { filter: blur(35px); transition: filter 0.6s ease; }
         body.unlocked .blur-target { filter: blur(0); }
         .shield-ui { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
         body.unlocked .shield-ui { display: none; }
-        .unlock-btn { background: var(--text-main); color: #FFF; border: none; padding: 20px 40px; border-radius: 12px; font-weight: 900; cursor: pointer; letter-spacing: 2px; }
+        .unlock-btn { background: var(--text-main); color: #FFF; border: none; padding: 20px 40px; border-radius: 12px; font-weight: 900; cursor: pointer; }
         .app-container { display: flex; flex-direction: column; width: 100%; margin: 0 auto; }
         @media (min-width: 768px) {
             .app-container { flex-direction: row; max-width: var(--content-width); gap: 50px; padding: 40px 20px; }
@@ -24,8 +24,7 @@
             .side-column { width: 340px; position: sticky; top: 40px; height: fit-content; }
         }
         .hero { aspect-ratio: 16/9; background: #F8F8F8; overflow: hidden; border-radius: 12px; }
-        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; scrollbar-width: none; -ms-overflow-style: none; }
-        .carousel::-webkit-scrollbar { display: none; }
+        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; scrollbar-width: none; }
         .carousel-item { flex: 0 0 100%; scroll-snap-align: center; }
         .carousel-item img { width: 100%; height: 100%; object-fit: contain; }
         .tier-emblem { display: inline-block; padding: 6px 18px; border-radius: 50px; font-weight: 900; font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; }
@@ -75,14 +74,14 @@
     async function init() {
         if (localStorage.getItem('asl_unlocked') === 'true') document.body.classList.add('unlocked');
         
-        // 🚀 強力なID抽出: スラッシュやハイフン、?以降を徹底除去
-        const rawPath = window.location.pathname.replace(/\/$/, "");
-        const pathSegments = rawPath.split('/').filter(Boolean);
-        let pid = pathSegments[pathSegments.length - 1] || "";
+        // 🚀 超強力なIDクレンジング
+        let rawPath = window.location.pathname.replace(/\/$/, "");
+        let segments = rawPath.split('/').filter(Boolean);
+        let pid = segments[segments.length - 1] || "";
         
-        // ハイフン以降を削除（sone00614-2 -> sone00614）
-        pid = pid.split('-')[0];
-        // 英数字以外を削除
+        // ハイフンやパラメータ以降を物理的にカット (sone00614-2?affi... -> sone00614)
+        pid = pid.split(/[-?]/)[0];
+        // 英数字以外を完全に抹殺
         pid = pid.replace(/[^a-zA-Z0-9]/g, "");
 
         if (!pid || pid === 'p') {
@@ -91,12 +90,15 @@
         }
 
         try {
-            const res = await fetch(`${CONFIG.API}?id=${pid}`, { cache: "no-store" });
+            // 絶対URLを使用してフェッチ (外部ドメインリーク防止)
+            const fetchUrl = CONFIG.API + "?id=" + pid;
+            const res = await fetch(fetchUrl, { method: 'GET', cache: "no-store" });
             const item = await res.json();
+            
             if (!item || !item.CID || item.error) throw new Error("404");
             renderDetail(item);
         } catch (e) {
-            document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;"><h2>DATA ERROR</h2><p>ID: ${pid}</p><a href="/">HOME</a></div>`;
+            document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;"><h2>DATA ERROR</h2><p>ID: ${pid}</p><a href="/" style="color:var(--accent);">HOME</a></div>`;
         }
     }
 
