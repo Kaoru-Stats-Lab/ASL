@@ -82,6 +82,32 @@
             } catch (err) { console.error(err); }
         }
 
+// 1. ページ読み込み時に実行する処理
+window.onload = function() {
+    const path = window.location.pathname; // 現在のURLを取得
+    
+    // URLに "/p/" が含まれているかチェック
+    if (path.includes('/p/')) {
+        // 例: /p/1start00010 から "1start00010" を抽出
+        const productId = path.split('/').pop();
+        loadSingleProduct(productId); // 個別作品を読み込む関数へ
+    } else {
+        loadAllProducts(); // 通常のトップページ表示
+    }
+};
+
+// 2. スプレッドシートから特定のIDだけを取得する関数
+async function loadSingleProduct(id) {
+    console.log("特定IDを読み込み中:", id);
+    // CONFIG.API（あなたのGASのURL）にパラメータを付けてリクエスト
+    const response = await fetch(`${CONFIG.API}?id=${id}`);
+    const data = await response.json();
+    
+    // 取得した1件のデータを、いつもの表示用関数（renderなど）に渡す
+    displayProductDetail(data); 
+}
+
+        
         function router() {
             const path = window.location.pathname;
             if (path.startsWith('/p/')) { renderDetail(path.replace('/p/', '')); }
