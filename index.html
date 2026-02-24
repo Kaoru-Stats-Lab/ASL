@@ -2,230 +2,108 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASL v2.7.6 | Adult Stats Lab</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root { --asl-bg: #05070a; --asl-rose: #ff4d6d; }
-        body { background-color: var(--asl-bg); color: #e6edf3; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        
-        /* 統合ブラー・プロトコル */
-        .privacy-shield { filter: blur(45px); transition: filter 0.5s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-        .video-shield-overlay { position: absolute; inset: 0; z-index: 10; backdrop-filter: blur(45px); background: rgba(5,7,10,0.6); transition: all 0.5s ease; pointer-events: none; }
-        
-        /* 全解除時の挙動 */
-        body.unblur-all .privacy-shield { filter: blur(0); }
-        body.unblur-all .video-shield-overlay { backdrop-filter: blur(0); background: rgba(0,0,0,0); opacity: 0; }
-        
-        .carousel-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
-        .carousel-track::-webkit-scrollbar { display: none; }
-        .carousel-item { flex: 0 0 100%; scroll-snap-align: start; height: 100%; }
-        .asl-gradient { background: linear-gradient(90deg, #ff4d6d 0%, #ff758f 100%); }
-        .blur-indicator { position: fixed; top: 24px; right: 24px; z-index: 100; transition: 0.3s; }
-        body.unblur-all .blur-indicator { opacity: 0.4; transform: scale(0.9); }
-        
-        #video-wrapper { width: 100%; position: relative; background: #000; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
-        @media (max-width: 768px) { #video-wrapper { border-radius: 0; border-left: none; border-right: none; width: 100vw; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; } }
-    </style>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-423FLHB5SK"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      // SPAのURL変更を検知するための設定
-      gtag('config', 'G-606GEFXTW4', {
-        'send_page_view': true
-      });
+      gtag('config', 'G-606GEFXTW4');
     </script>
+    <style>
+        body { background-color: #000; color: #fff; font-family: sans-serif; margin: 0; overflow-x: hidden; }
+        .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .shield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        .shield.active { opacity: 0; pointer-events: none; }
+        .shield-btn { background: #ff4757; color: white; border: none; padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: bold; }
+        .carousel { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 20px; scroll-snap-type: x mandatory; }
+        .carousel img { height: 400px; scroll-snap-align: start; border-radius: 8px; }
+        .content-card { background: #1a1a1a; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        h1 { font-size: 1.5rem; margin-bottom: 10px; }
+        .meta { color: #aaa; font-size: 0.9rem; margin-bottom: 15px; }
+        .insight { border-left: 4px solid #ff4757; padding-left: 15px; font-style: italic; color: #ddd; }
+    </style>
 </head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
+<body>
+
+<div id="shield" class="shield">
+    <button class="shield-btn" onclick="toggleShield()">SHIELD ACTIVE (CLICK TO UNLOCK)</button>
+</div>
+
+<div class="container" id="app">
+    <div id="content-area">Loading...</div>
+</div>
+
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-606GEFXTW4');
-</script>
-<body class="selection:bg-rose-500/30">
+    const CONFIG = {
+        // 先ほど成功した最新のGAS URL
+        API: 'https://script.google.com/macros/s/AKfycbwpjpE95dwEeMB3VSkBdGiP38PTLtdtU_FCJ1Eia8pTg3sDLX75C5vMvH67bCIAapi-TQ/exec'
+    };
 
-    <div onclick="toggleGlobalBlur()" class="blur-indicator bg-black/80 backdrop-blur-2xl border border-white/20 px-4 py-2 rounded-full flex items-center gap-3 cursor-pointer shadow-2xl">
-        <div class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_10px_#ff4d6d]" id="status-dot"></div>
-        <span class="text-[10px] font-black uppercase tracking-widest text-white italic" id="status-text">Shield Active</span>
-    </div>
-
-    <div id="asl-root"></div>
-
-    <script>
-        const CONFIG = {
-            API: "const CONFIG = {
-    // さきほど成功した最新のAPI URLに差し替え
-    API: "https://script.google.com/macros/s/AKfycbxRIYfxlvDU-K4Mb0vmI67NrGTwW0xc5ZPVjFq3d0P20T7LhdcEflDofhI5cD7z1OF3og/exec",
-    REV: "v2.8.6-STABLE"
-};",
-        };
-        let db = [];
-
-        function toggleGlobalBlur() {
-            document.body.classList.toggle('unblur-all');
-            const isOff = document.body.classList.contains('unblur-all');
-            document.getElementById('status-text').innerText = isOff ? "Shield Off" : "Shield Active";
-            document.getElementById('status-dot').style.opacity = isOff ? "0.3" : "1";
-        }
-
-        const navigate = (path) => { window.history.pushState({}, '', path); router(); };
-
-        async function bootASL() {
-            try {
-                const res = await fetch(CONFIG.API);
-                db = await res.json();
-                window.onpopstate = router;
-                router();
-            } catch (err) { console.error(err); }
-        }
-
-// 1. ページ読み込み時に実行する処理
-window.onload = function() {
-    const path = window.location.pathname; // 現在のURLを取得
-    
-    // URLに "/p/" が含まれているかチェック
-    if (path.includes('/p/')) {
-        // 例: /p/1start00010 から "1start00010" を抽出
-        const productId = path.split('/').pop();
-        loadSingleProduct(productId); // 個別作品を読み込む関数へ
-    } else {
-        loadAllProducts(); // 通常のトップページ表示
+    function toggleShield() {
+        document.getElementById('shield').classList.add('active');
+        gtag('event', 'shield_unlock');
     }
-};
 
-// 2. スプレッドシートから特定のIDだけを取得する関数
-async function loadSingleProduct(id) {
-    console.log("特定IDを読み込み中:", id);
-    // CONFIG.API（あなたのGASのURL）にパラメータを付けてリクエスト
-    const response = await fetch(`${CONFIG.API}?id=${id}`);
-    const data = await response.json();
-    
-    // 取得した1件のデータを、いつもの表示用関数（renderなど）に渡す
-    displayProductDetail(data); 
-}
+    async function init() {
+        const path = window.location.pathname;
+        const productId = path.includes('/p/') ? path.split('/').pop() : null;
+        const contentArea = document.getElementById('content-area');
 
-        
-        function router() {
-            const path = window.location.pathname;
-            if (path.startsWith('/p/')) { renderDetail(path.replace('/p/', '')); }
-            else if (path.startsWith('/a/')) { renderActressLP(path.replace('/a/', '')); }
-            else { renderGallery(); }
-            window.scrollTo(0, 0);
-        }
+        try {
+            let fetchUrl = CONFIG.API;
+            if (productId) fetchUrl += `?id=${productId}`;
 
-        function renderGallery() {
-            const root = document.getElementById('asl-root');
-            root.innerHTML = `<header class="p-8 border-b border-white/5"><h1 class="text-2xl font-black italic text-rose-500 tracking-tighter leading-none uppercase">ASL Analytics</h1></header>
-                <main class="p-4 grid grid-cols-2 gap-4">
-                    ${db.map(node => `
-                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/40 rounded-2xl overflow-hidden border border-white/5 cursor-pointer active:scale-95 transition-all">
-                            <div class="aspect-[3/4] relative bg-slate-800">
-                                <img src="${node.IMAGE_LIST ? node.IMAGE_LIST[0] : ''}" class="w-full h-full object-cover privacy-shield">
-                                <div class="absolute top-2 left-2 bg-black/70 px-2 py-1 rounded text-[8px] font-bold">T:${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
-                            </div>
-                            <div class="p-3"><h3 class="text-[10px] font-bold line-clamp-2 text-slate-400 uppercase leading-snug tracking-tighter">${node.TITLE}</h3></div>
-                        </div>
-                    `).join('')}
-                </main>`;
-        }
+            const response = await fetch(fetchUrl);
+            const data = await response.json();
 
-        function renderDetail(cid) {
-            const node = db.find(n => n.CID === cid);
-            if (!node) return navigate('/');
-            const root = document.getElementById('asl-root');
-            const images = node.IMAGE_LIST || [];
-
-            root.innerHTML = `
-                <div class="relative w-full aspect-[4/5] bg-black" onclick="toggleGlobalBlur()">
-                    <div class="carousel-track h-full">
-                        ${images.map(img => `<div class="carousel-item"><img src="${img}" class="w-full h-full object-contain privacy-shield"></div>`).join('')}
-                    </div>
-                    <button onclick="event.stopPropagation(); navigate('/');" class="absolute top-6 left-6 w-10 h-10 bg-black/50 backdrop-blur rounded-full text-white border border-white/10 flex items-center justify-center">✕</button>
-                    ${images.length > 1 ? '<div class="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pointer-events-none"><div class="w-8 h-1 bg-rose-500 rounded-full"></div><div class="w-1.5 h-1 bg-white/20 rounded-full"></div></div>' : ''}
-                </div>
-
-                <div class="p-8 space-y-10 pb-40">
-                    <section>
-                        <div class="flex items-baseline gap-3">
-                            <span class="text-7xl font-black italic text-white tracking-tighter leading-none">${parseFloat(node.T_SCORE || 0).toFixed(1)}</span>
-                            <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest italic leading-none">Rank ${node.TIER || 'A'}</span>
-                        </div>
-                        <h2 class="text-xl font-bold leading-tight mt-4 text-slate-100">${node.TITLE}</h2>
-                        <div class="mt-6 flex flex-wrap gap-2">
-                            ${(node.ACTRESS_LIST || []).map(a => `<div onclick="event.stopPropagation(); navigate('/a/${a.slug}')" class="px-3 py-1.5 bg-rose-500/10 rounded-full border border-rose-500/20 cursor-pointer text-[10px] font-black text-rose-400 uppercase tracking-widest italic">@${a.name}</div>`).join('')}
-                        </div>
-                    </section>
-
-                    <section class="space-y-4">
-                        <div class="flex justify-between items-center px-1">
-                            <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest italic leading-none">Visual Evidence Analysis</h4>
-                            <span class="text-[8px] text-slate-600 font-mono italic">SYNS-BLUR ENABLED</span>
-                        </div>
-                        <div id="video-wrapper">
-                            <div class="video-shield-overlay" id="v-shield"></div>
-                            
-                            <div id="video-container" class="relative aspect-video flex items-center justify-center bg-slate-900/50">
-                                <button onclick="event.stopPropagation(); resolveAndLoadVideo('${node.MOVIE_URL || ''}')" class="flex flex-col items-center gap-3 z-20">
-                                    <div class="w-16 h-16 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,77,109,0.5)] group-active:scale-95 transition-all">
-                                        <svg class="w-8 h-8 text-white fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                    </div>
-                                    <span class="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] italic">Init Stream</span>
-                                </button>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="space-y-4 bg-white/[0.02] p-8 rounded-3xl border border-white/5">
-                        ${['VIS', 'STY', 'TECH', 'HEA', 'RAR', 'VAL'].map(key => `
-                            <div class="space-y-1.5">
-                                <div class="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none"><span>${key}</span><span>${parseFloat(node[key]||0).toFixed(1)}</span></div>
-                                <div class="h-1 bg-white/5 rounded-full overflow-hidden"><div class="asl-gradient h-full" style="width: ${Math.min(100, (parseFloat(node[key]||0)/5)*100)}%"></div></div>
-                            </div>
-                        `).join('')}
-                    </section>
-                </div>
-
-                <div class="fixed bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/95 to-transparent z-50">
-                    <a href="https://www.dmm.co.jp/mono/dvd/-/detail/=/cid=${node.CID}/" class="flex items-center justify-center w-full bg-rose-600 text-white font-black py-5 rounded-2xl shadow-2xl uppercase tracking-[0.3em] text-[11px] transition-all">Execute Data Acquisition</a>
-                </div>
-            `;
-        }
-
-        function resolveAndLoadVideo(rawUrl) {
-            if (!rawUrl) return;
-            const container = document.getElementById('video-container');
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            
-            const vWidth = isMobile ? window.innerWidth : container.offsetWidth;
-            const vHeight = Math.floor(vWidth * 9 / 16);
-            
-            let finalUrl = rawUrl;
-            if (isMobile) {
-                finalUrl = rawUrl.replace('/part/', '/free_player/').replace('size=720_480', `size=${vWidth}_${vHeight}`);
+            if (productId) {
+                renderDetail(data);
+            } else {
+                renderList(data);
             }
+        } catch (error) {
+            contentArea.innerHTML = 'データの読み込みに失敗しました。';
+            console.error(error);
+        }
+    }
 
-            container.style.height = vHeight + 'px';
-            container.innerHTML = `<iframe src="${finalUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen" referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0"></iframe>`;
+    function renderDetail(item) {
+        if (item.error) {
+            document.getElementById('content-area').innerHTML = '作品が見つかりませんでした。';
+            return;
         }
 
-        function renderActressLP(slug) {
-            const works = db.filter(n => n.ACTRESS_LIST && n.ACTRESS_LIST.some(a => a.slug === slug));
-            const actress = works.length > 0 ? works[0].ACTRESS_LIST.find(a => a.slug === slug) : {name: "Unknown"};
-            const root = document.getElementById('asl-root');
-            root.innerHTML = `<header class="p-8">
-                    <button onclick="navigate('/')" class="text-[9px] mb-6 font-black tracking-[0.3em] border border-white/10 px-4 py-1.5 rounded-full text-slate-500 uppercase italic">← Return</button>
-                    <h1 class="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">${actress.name}</h1>
-                </header>
-                <main class="p-4 grid grid-cols-2 gap-4 pb-32">
-                    ${works.map(node => `<div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/40 rounded-2xl overflow-hidden border border-white/5 aspect-[3/4] relative">
-                        <img src="${node.IMAGE_LIST ? node.IMAGE_LIST[0] : ''}" class="w-full h-full object-cover privacy-shield">
-                    </div>`).join('')}
-                </main>`;
-        }
-        bootASL();
-    </script>
+        const images = item.IMAGE_URLS ? item.IMAGE_URLS.split(',') : [];
+        const carouselHtml = images.map(img => `<img src="${img.trim()}" alt="gallery">`).join('');
+
+        document.getElementById('content-area').innerHTML = `
+            <div class="carousel">${carouselHtml}</div>
+            <div class="content-card">
+                <h1>${item.TITLE}</h1>
+                <div class="meta">女優: ${item.ACTRESS_NAME} | ID: ${item.CID} | スコア: ${item.T_SCORE}</div>
+                <div class="insight">${item.INSIGHT_TEXT || '解析中...'}</div>
+                <p style="margin-top:20px; color:#ccc;">${item.META_DESC || ''}</p>
+            </div>
+            <a href="/" style="color:#ff4757; text-decoration:none;">← トップへ戻る</a>
+        `;
+        document.title = `${item.TITLE} | ASL`;
+    }
+
+    function renderList(data) {
+        const listHtml = data.map(item => `
+            <div class="content-card" onclick="location.href='/p/${item.CID}'" style="cursor:pointer;">
+                <img src="${item.IMAGE_URLS.split(',')[0]}" style="width:100%; border-radius:8px; margin-bottom:10px;">
+                <h3>${item.TITLE}</h3>
+                <p>${item.ACTRESS_NAME}</p>
+            </div>
+        `).join('');
+        document.getElementById('content-area').innerHTML = listHtml;
+    }
+
+    window.onload = init;
+</script>
+
 </body>
 </html>
