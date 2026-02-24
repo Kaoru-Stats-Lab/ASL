@@ -48,6 +48,39 @@
         .nav-btn { flex: 1; padding: 16px; border-radius: 10px; text-align: center; font-weight: 800; text-decoration: none; font-size: 14px; }
         .btn-main { background: var(--accent); color: #FFF; } .btn-sub { background: #F5F5F5; color: #111; }
     </style>
+/* ASL Laboratory Style */
+#asl-lp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    padding: 20px;
+    background: #fcfcfc;
+}
+
+.analysis-card {
+    background: #fff;
+    border: 1px solid #eee;
+    transition: transform 0.2s ease;
+}
+
+.analysis-card:hover { transform: translateY(-5px); }
+
+.visual-frame img { width: 100%; height: auto; display: block; }
+
+.analysis-data { padding: 15px; }
+
+.data-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; }
+
+.subject-name { font-size: 1.2rem; margin: 5px 0; color: #111; }
+
+.taxonomy-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+.tag { font-size: 0.7rem; color: #666; background: #f0f0f0; padding: 2px 6px; border-radius: 2px; }
+
+.narrative-peek { font-size: 0.75rem; color: #888; line-height: 1.4; border-top: 1px dashed #eee; padding-top: 10px; }
+
+.label { font-weight: bold; color: #aaa; margin-right: 5px; }
+    
 </head>
 <body>
     <div id="shield-ui" class="shield-ui"><button class="unlock-btn" onclick="globalUnlock()">ACCESS GRANTED</button></div>
