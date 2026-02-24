@@ -3,109 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASL v2.8.6 | Adult Stats Lab</title>
+    <title>ASL v3.5.0 | Adult Stats Lab</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-606GEFXTW4');
+      window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date()); gtag('config', 'G-606GEFXTW4');
     </script>
     <style>
-        /* CSSは前回の2.8.5を継承しつつ、画像の表示を安定化 */
-        :root { --accent: #FF4757; --bg: #FFFFFF; --text-main: #1A1A1A; --text-sub: #666666; --border: #EEEEEE; --gold: #FFD700; --silver: #E0E0E0; --content-width: 1140px; }
-        body { background: var(--bg); color: var(--text-main); font-family: -apple-system, sans-serif; margin: 0; line-height: 1.6; }
-        .blur-target { filter: blur(35px); transition: filter 0.6s ease; }
+        :root {
+            --accent: #FF4757; --bg: #FFFFFF; --text-main: #1A1A1A; --text-sub: #666;
+            --border: #EEEEEE; --content-width: 1140px;
+        }
+        body { background: var(--bg); color: var(--text-main); font-family: -apple-system, system-ui, sans-serif; margin: 0; line-height: 1.6; }
+        
+        /* シールド(ブラー) */
+        .blur-target { filter: blur(35px); transition: filter 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
         body.unlocked .blur-target { filter: blur(0); }
-        .shield-ui { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
+        .shield-ui { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
         body.unlocked .shield-ui { display: none; }
-        .unlock-btn { background: var(--text-main); color: white; border: none; padding: 20px 40px; border-radius: 12px; font-weight: 900; cursor: pointer; }
+        .unlock-btn { background: var(--text-main); color: #FFF; border: none; padding: 20px 40px; border-radius: 12px; font-weight: 900; cursor: pointer; letter-spacing: 2px; }
+
+        /* レイアウト */
         .app-container { display: flex; flex-direction: column; width: 100%; margin: 0 auto; }
-        @media (min-width: 768px) { .app-container { flex-direction: row; max-width: var(--content-width); gap: 50px; padding: 60px 20px; } .main-column { flex: 1; min-width: 0; } .side-column { width: 340px; position: sticky; top: 40px; height: fit-content; } .footer-nav { position: static !important; flex-direction: column !important; padding: 0 !important; margin-top: 30px; } }
-        @media (max-width: 767px) { .side-column { padding: 20px; } .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); border-top: 1px solid var(--border); padding: 15px 20px calc(15px + env(safe-area-inset-bottom)); display: flex; justify-content: space-between; gap: 12px; z-index: 1000; } }
-        .hero { position: relative; width: 100%; background: #F8F8F8; aspect-ratio: 16/9; overflow: hidden; }
-        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; }
-        .carousel-item { flex: 0 0 100%; height: 100%; scroll-snap-align: center; }
+        @media (min-width: 768px) {
+            .app-container { flex-direction: row; max-width: var(--content-width); gap: 50px; padding: 40px 20px; }
+            .main-column { flex: 1; min-width: 0; }
+            .side-column { width: 340px; position: sticky; top: 40px; height: fit-content; }
+        }
+
+        /* ヒーロー & カルーセル */
+        .hero { aspect-ratio: 16/9; background: #F8F8F8; overflow: hidden; border-radius: 12px; position: relative; }
+        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; scrollbar-width: none; }
+        .carousel-item { flex: 0 0 100%; scroll-snap-align: center; }
         .carousel-item img { width: 100%; height: 100%; object-fit: contain; }
-        .score-row { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 25px; }
-        .score-box { min-width: 65px; height: 65px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900; color: white; }
-        .actress-name { font-size: 1.6rem; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .tier-badge { display: inline-block; padding: 3px 10px; font-size: 0.75rem; font-weight: 900; border-radius: 4px; margin-bottom: 6px; text-transform: uppercase; }
-        .tier-Gold { background: var(--gold); color: #8B4513; }
-        .tier-Silver { background: var(--silver); color: #666; }
-        .stats-card { padding: 25px; background: #FAFAFA; border: 1px solid #F0F0F0; border-radius: 16px; margin-bottom: 30px; }
-        .stat-row { font-family: monospace; font-size: 12px; display: flex; align-items: center; margin-bottom: 10px; }
-        .stat-label { width: 45px; color: #AAA; }
-        .gauge-f { color: var(--accent); }
-        .gauge-e { color: #DDD; }
-        .nav-btn { flex: 1; padding: 16px; border-radius: 10px; text-align: center; font-weight: 800; text-decoration: none; }
-        .btn-main { background: var(--accent); color: white; }
-        .btn-sub { background: #F5F5F5; color: var(--text-main); }
+
+        /* TIER エンブレム */
+        .tier-emblem { display: inline-block; padding: 6px 18px; border-radius: 50px; font-weight: 900; font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .tier-Diamond { background: linear-gradient(135deg, #e0f7fa, #00acc1); color: #FFF; }
+        .tier-Platinum { background: linear-gradient(135deg, #e5e4e2, #7d7d7d); color: #FFF; }
+        .tier-Gold { background: linear-gradient(135deg, #f1c40f, #d4af37); color: #FFF; }
+        .tier-Silver { background: linear-gradient(135deg, #bdc3c7, #7f8c8d); color: #FFF; }
+        .tier-Bronze { background: linear-gradient(135deg, #cd7f32, #8b4513); color: #FFF; }
+        .tier-Stone { background: linear-gradient(135deg, #95a5a6, #34495e); color: #FFF; }
+        .tier-Iron { background: linear-gradient(135deg, #555555, #000); color: #FFF; }
+
+        /* タクソノミー */
+        .tax-group { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+        .tax-tag { padding: 4px 12px; font-size: 0.72rem; font-weight: bold; border-radius: 20px; border: 1px solid var(--border); text-decoration: none; color: var(--text-sub); background: #FDFDFD; }
+        .tax-actress { color: var(--accent); border-color: var(--accent); }
+
+        /* Bio & EEAT */
+        .bio-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #F9F9F9; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #EEE; }
+        .bio-item { text-align: center; border-right: 1px solid #EEE; }
+        .bio-item:last-child { border-right: none; }
+        .bio-label { font-size: 0.6rem; color: #999; font-weight: bold; display: block; }
+        .bio-val { font-size: 0.95rem; font-weight: 900; font-family: monospace; }
+        .eeat-box { background: #FFF; border: 1px dashed #DDD; padding: 15px; border-radius: 12px; margin: 15px 0; display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; }
+        
+        /* 分析レポート */
+        .report-card { background: #FFF; border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-top: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+        .report-title { font-size: 1rem; font-weight: 900; border-bottom: 2px solid #111; padding-bottom: 8px; margin-bottom: 15px; }
+        .report-body { font-size: 0.95rem; line-height: 1.8; color: #333; white-space: pre-wrap; text-align: justify; }
+
+        /* サイドバー スコア */
+        .meter-box { position: relative; width: 140px; height: 140px; margin: 0 auto 20px; }
+        .score-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-val { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+        .stat-card { background: #FAFAFA; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+        .stat-row { font-family: monospace; font-size: 11px; display: flex; align-items: center; margin-bottom: 6px; }
+        .gauge-f { color: var(--accent); } .gauge-e { color: #DDD; }
+
+        /* フッターボタン */
+        .footer-nav { display: flex; gap: 10px; padding: 20px 0; }
+        @media (max-width: 767px) { .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #FFF; padding: 15px 20px; border-top: 1px solid #EEE; z-index: 1000; } }
+        .nav-btn { flex: 1; padding: 16px; border-radius: 10px; text-align: center; font-weight: 800; text-decoration: none; font-size: 14px; }
+        .btn-main { background: var(--accent); color: #FFF; } .btn-sub { background: #F5F5F5; color: #111; }
     </style>
 </head>
 <body>
+
     <div id="shield-ui" class="shield-ui"><button class="unlock-btn" onclick="globalUnlock()">ACCESS GRANTED</button></div>
     <div id="app"></div>
+
 <script>
     const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbwpjpE95dwEeMB3VSkBdGiP38PTLtdtU_FCJ1Eia8pTg3sDLX75C5vMvH67bCIAapi-TQ/exec' };
     function globalUnlock() { localStorage.setItem('asl_unlocked', 'true'); document.body.classList.add('unlocked'); }
-    const getGauge = (val) => {
-        const v = parseFloat(val) || 0;
-        const total = 20; const filled = Math.round((v / 5.0) * total);
-        return `<span class="gauge-f">${'|'.repeat(filled)}</span><span class="gauge-e">${'|'.repeat(Math.max(0, total - filled))}</span>`;
-    };
+    const fmt = (v) => (!v || v === "N/A") ? "N/A" : v;
+    const getGauge = (v) => { const total = 20; const filled = Math.round((parseFloat(v)||0)/5*total); return `<span class="gauge-f">${'|'.repeat(filled)}</span><span class="gauge-e">${'|'.repeat(Math.max(0,total-filled))}</span>`; };
+
     async function init() {
         if (localStorage.getItem('asl_unlocked') === 'true') document.body.classList.add('unlocked');
-        const path = window.location.pathname;
-        const productId = path.split('/').filter(Boolean).pop();
-        if (!productId || productId === 'p') {
-            document.getElementById('app').innerHTML = '<div style="padding:100px;text-align:center;">Archive Mode (In Development)</div>';
-            return;
-        }
+        const productId = window.location.pathname.split('/').filter(Boolean).pop();
+        if (!productId || productId === 'p') return;
         try {
             const res = await fetch(`${CONFIG.API}?id=${productId}`);
             const item = await res.json();
-            if (!item || item.error) throw new Error("Item not found");
             renderDetail(item);
-        } catch (e) {
-            document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;">Data Load Error: ${productId}</div>`;
-        }
+        } catch (e) { document.getElementById('app').innerHTML = '<div style="padding:100px;text-align:center;">Data Error</div>'; }
     }
+
     function renderDetail(item) {
-        const images = (item.IMAGE_URLS || "").split(',').filter(url => url.trim() !== "");
-        const score = Math.round(parseFloat(item.T_SCORE) || 0);
-        const scoreColor = score >= 70 ? '#66CC33' : (score >= 50 ? '#FFCC33' : '#FF3333');
+        const images = (item.IMAGE_URLS || "").split(',').filter(u => u.trim());
+        const tScore = parseFloat(item.T_SCORE || 0).toFixed(1);
+        const scoreColor = tScore >= 60 ? '#66CC33' : (tScore >= 45 ? '#FFCC33' : '#FF3333');
+        const tier = item.TIER || "Iron";
+
         document.getElementById('app').innerHTML = `
             <div class="app-container">
                 <div class="main-column">
                     <div class="hero blur-target">
                         <div class="carousel">${images.map(src => `<div class="carousel-item"><img src="${src.trim()}"></div>`).join('')}</div>
                     </div>
-                    <div style="padding: 20px;">
-                        <div style="font-style:italic; border-left:5px solid var(--accent); padding:15px; background:#F9F9F9; margin:20px 0; font-size:1.2rem;">"${item.INSIGHT_TEXT || ''}"</div>
-                        <div style="color:var(--text-sub); line-height:1.8;">${item.META_DESC || ''}</div>
+                    <div style="padding:20px;">
+                        <div class="tax-group">
+                            ${(item.ACTRESS_NAME||"").split(',').map((n,i)=>`<a href="/?a=${(item.ACTRESS_ID||"").split(',')[i]}" class="tax-tag tax-actress">👤 ${n.trim()}</a>`).join('')}
+                            <a href="/?s=${item.MAKER_ID}" class="tax-tag">🏢 ${item.MAKER}</a>
+                        </div>
+                        <div class="bio-section">
+                            <div class="bio-item"><span class="bio-label">BUST / CUP</span><span class="bio-val">${fmt(item.BUST)}</span> ${fmt(item.CUP)!=='N/A'?`<span style="background:var(--accent);color:#FFF;padding:1px 4px;border-radius:3px;font-size:0.7rem;">${item.CUP}</span>`:''}</div>
+                            <div class="bio-item"><span class="bio-label">WAIST / HIP</span><span class="bio-val">${fmt(item.WAIST)} / ${fmt(item.HIP)}</span></div>
+                            <div class="bio-item"><span class="bio-label">HEIGHT</span><span class="bio-val">${fmt(item.HEIGHT)}${fmt(item.HEIGHT)!=='N/A'?'cm':''}</span></div>
+                        </div>
+                        <div class="eeat-box">
+                            <div><span class="bio-label">RELEASE / RUNTIME</span><div class="bio-val" style="font-size:0.8rem;">${(item.RELEASE_DATE||"").split(' ')[0]} / ${item.RUNTIME}m</div></div>
+                            <div style="text-align:right;"><span class="bio-label">PUBLIC AVG (${parseInt(item.N_COUNT).toLocaleString()} Samples)</span><div class="bio-val" style="color:var(--accent);">★${parseFloat(item.SW_AVG).toFixed(1)}</div></div>
+                        </div>
+                        <div class="report-card">
+                            <div class="report-title">EMOTIONAL RESONANCE ANALYSIS</div>
+                            <div class="report-body">${item.NARRATIVE_ALL || 'No data.'}</div>
+                        </div>
                     </div>
                 </div>
                 <div class="side-column">
-                    <div class="score-row">
-                        <div class="score-box" style="background:${scoreColor}">${score}</div>
-                        <div style="flex:1; min-width:0;">
-                            <div class="tier-badge tier-${item.TIER}">${item.TIER || 'Standard'}</div>
-                            <h1 class="actress-name">${item.ACTRESS_NAME || 'Unknown'}</h1>
+                    <div style="text-align:center; padding-bottom:30px;">
+                        <div class="tier-emblem tier-${tier}">${tier} CLASS</div>
+                        <div class="meter-box">
+                            <div class="score-inner"><span class="score-val" style="color:${scoreColor}">${tScore}</span><span class="bio-label">T-SCORE</span></div>
+                            <svg width="140" height="140"><circle cx="70" cy="70" r="64" fill="none" stroke="#F0F0F0" stroke-width="10" /><circle cx="70" cy="70" r="64" fill="none" stroke="${scoreColor}" stroke-width="10" stroke-dasharray="402" stroke-dashoffset="${402-(402*tScore/100)}" stroke-linecap="round" style="transition:stroke-dashoffset 1.5s ease-out" /></svg>
                         </div>
-                    </div>
-                    <div class="stats-card">
-                        ${['VIS','STY','TEC','HEA','RAR'].map(k => `<div class="stat-row"><span class="stat-label">${k}</span> ${getGauge(item[k])} <span style="margin-left:auto;">${item[k] || 0}</span></div>`).join('')}
-                    </div>
-                    <div style="margin-bottom:20px; font-weight:bold; color:var(--text-sub);">${item.TITLE || ''}</div>
-                    <div class="footer-nav">
-                        <a href="/" class="nav-btn btn-sub">BACK</a>
-                        <a href="${item.SCRAPE_SOURCE || '#'}" target="_blank" class="nav-btn btn-main">CHECK DETAILS</a>
+                        <div class="stat-card">
+                            <div style="font-size:0.65rem;font-weight:900;color:#999;margin-bottom:10px;text-align:left;">ANALYTICS 6-AXIS</div>
+                            ${['VIS','STY','TEC','HEA','RAR','IMP'].map(k=>`<div class="stat-row"><span class="stat-label">${k}</span> ${getGauge(item[k])} <span style="margin-left:auto">${item[k]||0}</span></div>`).join('')}
+                        </div>
+                        <canvas id="radarChart"></canvas>
+                        <div class="footer-nav">
+                            <a href="/" class="nav-btn btn-sub">BACK</a>
+                            <a href="${item.SCRAPE_SOURCE}" target="_blank" class="nav-btn btn-main">CHECK DETAILS</a>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
-        document.title = `${item.ACTRESS_NAME || 'ASL'} | Adult Stats Lab`;
+        
+        new Chart(document.getElementById('radarChart'), {
+            type: 'radar',
+            data: { labels: ['VIS','STY','TEC','HEA','RAR','IMP'], datasets: [{ data: [item.VIS, item.STY, item.TEC, item.HEA, item.RAR, item.IMP||3], backgroundColor: 'rgba(255, 71, 87, 0.1)', borderColor: '#FF4757', borderWidth: 2, pointRadius: 0 }] },
+            options: { scales: { r: { min: 0, max: 5, ticks: { display: false }, grid: { color: '#EEE' } } }, plugins: { legend: { display: false } } }
+        });
+
+        const meta = document.createElement('meta'); meta.name = "description"; meta.content = item.META_DESC || ""; document.head.appendChild(meta);
     }
     init();
 </script>
