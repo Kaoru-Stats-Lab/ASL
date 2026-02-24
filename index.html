@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASL v2.8.0 | Adult Stats Lab</title>
+    <title>ASL v2.8.5 | Adult Stats Lab</title>
     
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
     <script>
@@ -15,114 +15,131 @@
 
     <style>
         :root {
-            --accent: #FF4757;      /* メインアクセント（赤） */
-            --bg: #FFFFFF;          /* ベース（白） */
-            --text-main: #1A1A1A;   /* 主要文字色（黒） */
-            --text-sub: #666666;    /* サブ文字色（グレー） */
+            --accent: #FF4757;      /* アクセント：レッド */
+            --bg: #FFFFFF;          /* ベース：ホワイト */
+            --text-main: #1A1A1A;   /* 主要文字：ブラック */
+            --text-sub: #666666;    /* サブ文字：グレー */
             --border: #EEEEEE;      /* 境界線 */
-            --gold: #FFD700;        /* Gold TIER用 */
-            --silver: #E0E0E0;      /* Silver TIER用 */
-            --score-green: #66CC33; /* 高評価色 */
+            --gold: #FFD700;        /* Goldバッジ */
+            --silver: #E0E0E0;      /* Silverバッジ */
+            --content-width: 1140px;
         }
 
         body {
             background-color: var(--bg);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0; padding: 0;
-            line-height: 1.5;
+            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- シールド（ブラー）制御 --- */
-        .blur-target {
-            filter: blur(30px);
-            transition: filter 0.6s ease-in-out;
-        }
+        /* --- ブラー（シールド）制御 --- */
+        .blur-target { filter: blur(35px); transition: filter 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
         body.unlocked .blur-target { filter: blur(0); }
 
         .shield-ui {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.95);
+            background: rgba(255,255,255,0.98);
             z-index: 9999; display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
         }
         body.unlocked .shield-ui { display: none; }
 
         .unlock-btn {
             background: var(--text-main); color: white;
-            border: none; padding: 18px 36px; border-radius: 12px;
-            font-weight: 900; letter-spacing: 2px; font-size: 1rem;
+            border: none; padding: 20px 40px; border-radius: 12px;
+            font-weight: 900; letter-spacing: 2px; font-size: 1.1rem; cursor: pointer;
         }
 
-        /* --- ヒーローセクション（動画・画像） --- */
-        .hero { position: relative; width: 100%; background: #F2F2F2; }
-        .carousel {
-            display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-            scrollbar-width: none;
+        /* --- レスポンシブ・グリッド構造 --- */
+        .app-container {
+            display: flex; flex-direction: column; width: 100%; margin: 0 auto;
         }
+
+        /* PC版レイアウト */
+        @media (min-width: 768px) {
+            .app-container {
+                flex-direction: row; max-width: var(--content-width);
+                gap: 50px; padding: 60px 20px;
+            }
+            .main-column { flex: 1; min-width: 0; }
+            .side-column { width: 340px; position: sticky; top: 40px; height: fit-content; }
+            .hero { border-radius: 16px; overflow: hidden; margin-bottom: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+            .footer-nav { 
+                position: static !important; background: none !important; border: none !important;
+                flex-direction: column !important; padding: 0 !important; margin-top: 30px; 
+            }
+        }
+
+        /* モバイル版レイアウト (iPhone 14 Pro対応) */
+        @media (max-width: 767px) {
+            .side-column { padding: 20px; }
+            .footer-nav {
+                position: fixed; bottom: 0; left: 0; width: 100%;
+                background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+                border-top: 1px solid var(--border);
+                padding: 15px 20px calc(15px + env(safe-area-inset-bottom));
+                display: flex; justify-content: space-between; gap: 12px; z-index: 1000;
+            }
+        }
+
+        /* --- ヒーローセクション --- */
+        .hero { position: relative; width: 100%; background: #F8F8F8; }
+        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
         .carousel::-webkit-scrollbar { display: none; }
-        .carousel-item {
-            flex: 0 0 100%; aspect-ratio: 16/9; display: flex;
-            align-items: center; justify-content: center; overflow: hidden;
-        }
-        .carousel-item img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.4s; }
+        .carousel-item { flex: 0 0 100%; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .carousel-item img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease; }
         .carousel-item img.loaded { opacity: 1; }
 
-        /* --- Metacriticスタイル ヘッダー --- */
-        .detail-header { padding: 20px; border-bottom: 1px solid var(--border); }
-        .score-row { display: flex; gap: 15px; align-items: flex-start; }
+        /* --- Metacriticスタイル コンポーネント --- */
+        .score-row { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 25px; }
         .score-box {
-            min-width: 60px; height: 60px; border-radius: 6px;
+            min-width: 65px; height: 65px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; font-weight: 900; color: white;
+            font-size: 30px; font-weight: 900; color: white;
         }
 
-        /* --- 文字省略ロジック --- */
         .actress-name {
-            font-size: 1.5rem; font-weight: 900; margin: 0; letter-spacing: -0.5px;
+            font-size: 1.6rem; font-weight: 900; margin: 0; letter-spacing: -1px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .work-title {
-            font-size: 0.9rem; color: var(--text-sub); margin-top: 4px;
+            font-size: 0.95rem; color: var(--text-sub); margin-top: 8px;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
-        /* --- TIERバッジ --- */
         .tier-badge {
-            display: inline-block; padding: 2px 8px; font-size: 0.7rem; font-weight: 900;
-            border-radius: 4px; margin-bottom: 4px; text-transform: uppercase;
+            display: inline-block; padding: 3px 10px; font-size: 0.75rem; font-weight: 900;
+            border-radius: 4px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;
         }
         .tier-Gold { background: var(--gold); color: #8B4513; }
         .tier-Silver { background: var(--silver); color: #666; }
 
         /* --- 水平ゲージ (|||||) --- */
-        .stats-card { padding: 20px; background: #FAFAFA; margin: 15px; border-radius: 12px; }
+        .stats-card { padding: 25px; background: #FAFAFA; border: 1px solid #F0F0F0; border-radius: 16px; margin-bottom: 30px; }
         .stat-row {
-            font-family: 'Courier New', monospace; font-size: 11px;
-            display: flex; align-items: center; margin-bottom: 8px;
+            font-family: 'Courier New', Courier, monospace; font-size: 12px;
+            display: flex; align-items: center; margin-bottom: 10px;
         }
-        .stat-label { width: 40px; font-weight: bold; color: #999; }
+        .stat-label { width: 45px; font-weight: bold; color: #AAA; }
         .gauge-f { color: var(--accent); font-weight: bold; letter-spacing: 1px; }
         .gauge-e { color: #DDD; letter-spacing: 1px; }
         .stat-num { margin-left: auto; color: var(--text-main); font-weight: bold; }
 
-        /* --- 追尾型フッターナビ --- */
-        .footer-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border);
-            padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
-            display: flex; justify-content: space-between; gap: 10px; z-index: 1000;
+        /* --- テキスト装飾 --- */
+        .insight-box {
+            font-style: italic; border-left: 5px solid var(--accent);
+            padding: 20px 25px; background: #FDFDFD; margin: 30px 0;
+            font-size: 1.2rem; line-height: 1.5; color: #333;
         }
-        .nav-btn {
-            flex: 1; padding: 14px; border-radius: 8px; text-align: center;
-            font-weight: 800; font-size: 14px; text-decoration: none;
-        }
-        .btn-main { background: var(--accent); color: white; }
-        .btn-sub { background: #F0F0F0; color: var(--text-main); }
+        .desc-text { font-size: 1rem; color: var(--text-sub); line-height: 1.8; text-align: justify; }
 
-        .content-body { padding: 20px; padding-bottom: 120px; }
+        /* --- ボタン --- */
+        .nav-btn { flex: 1; padding: 16px; border-radius: 10px; text-align: center; font-weight: 800; font-size: 15px; text-decoration: none; transition: transform 0.2s; }
+        .nav-btn:active { transform: scale(0.97); }
+        .btn-main { background: var(--accent); color: white; box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3); }
+        .btn-sub { background: #F5F5F5; color: var(--text-main); }
     </style>
 </head>
 <body>
@@ -133,31 +150,23 @@
 
     <div id="app"></div>
 
-    <div class="footer-nav">
-        <a href="/" class="nav-btn btn-sub">BACK</a>
-        <a href="#" class="nav-btn btn-main" id="direct-link">CHECK DETAILS</a>
-    </div>
-
 <script>
     const CONFIG = {
         API: 'https://script.google.com/macros/s/AKfycbwpjpE95dwEeMB3VSkBdGiP38PTLtdtU_FCJ1Eia8pTg3sDLX75C5vMvH67bCIAapi-TQ/exec'
     };
 
-    // --- ブラー解除状態の永続化 ---
     function globalUnlock() {
         localStorage.setItem('asl_unlocked', 'true');
         document.body.classList.add('unlocked');
-        gtag('event', 'unlock');
+        gtag('event', 'unlock_all');
     }
 
-    // --- ||||| 水平ゲージ生成（20本 / 5.0満点） ---
     const getGauge = (val) => {
         const total = 20;
         const filled = Math.round((val / 5.0) * total);
         return `<span class="gauge-f">${'|'.repeat(filled)}</span><span class="gauge-e">${'|'.repeat(total - filled)}</span>`;
     };
 
-    // --- 初期化処理 ---
     async function init() {
         if (localStorage.getItem('asl_unlocked') === 'true') {
             document.body.classList.add('unlocked');
@@ -166,8 +175,9 @@
         const path = window.location.pathname;
         const productId = path.split('/').filter(Boolean).pop();
         
+        // トップページ or /p/ 単体の場合はリスト表示へ
         if (!productId || productId === 'p') {
-            renderList(); // トップページのリスト表示（別途実装可能）
+            document.getElementById('app').innerHTML = `<div style="padding:100px; text-align:center;">Lab Archive Loading...</div>`;
             return;
         }
 
@@ -176,63 +186,66 @@
             const item = await res.json();
             renderDetail(item);
         } catch (e) {
-            console.error("API Fetch Error:", e);
+            console.error("Fetch Error:", e);
         }
     }
 
-    // --- 個別作品ページの描画 ---
     function renderDetail(item) {
         const images = item.IMAGE_URLS ? item.IMAGE_URLS.split(',') : [];
         const scoreColor = item.T_SCORE >= 70 ? '#66CC33' : (item.T_SCORE >= 50 ? '#FFCC33' : '#FF3333');
         const tierClass = `tier-${item.TIER || 'Standard'}`;
 
         document.getElementById('app').innerHTML = `
-            <div class="hero blur-target">
-                <div class="carousel">
-                    ${images.map((src, i) => `
-                        <div class="carousel-item">
-                            <img data-src="${src.trim()}" class="lazy" ${i === 0 ? `src="${src.trim()}" class="loaded"` : ''}>
+            <div class="app-container">
+                <div class="main-column">
+                    <div class="hero blur-target">
+                        <div class="carousel">
+                            ${images.map((src, i) => `
+                                <div class="carousel-item">
+                                    <img data-src="${src.trim()}" class="lazy" ${i === 0 ? `src="${src.trim()}" class="loaded"` : ''}>
+                                </div>
+                            `).join('')}
                         </div>
-                    `).join('')}
-                </div>
-            </div>
+                    </div>
 
-            <div class="detail-header">
-                <div class="score-row">
-                    <div class="score-box" style="background:${scoreColor}">${Math.round(item.T_SCORE)}</div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div class="tier-badge ${tierClass}">${item.TIER || 'Standard'}</div>
-                        <h1 class="actress-name">${item.ACTRESS_NAME}</h1>
-                        <div class="work-title">${item.TITLE}</div>
+                    <div class="content-body">
+                        <div class="insight-box">"${item.INSIGHT_TEXT || 'No insight recorded.'}"</div>
+                        <h3 style="font-size:1.1rem; border-bottom:2px solid #1a1a1a; display:inline-block; margin-bottom:15px; letter-spacing:1px;">ANALYSIS REPORT</h3>
+                        <div class="desc-text">${item.META_DESC || ''}</div>
                     </div>
                 </div>
-            </div>
 
-            <div class="stats-card">
-                ${['VIS','STY','TEC','HEA','RAR'].map(k => `
-                    <div class="stat-row">
-                        <span class="stat-label">${k}</span> ${getGauge(item[k])} <span class="stat-num">${item[k]}</span>
+                <div class="side-column">
+                    <div class="score-row">
+                        <div class="score-box" style="background:${scoreColor}">${Math.round(item.T_SCORE)}</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="tier-badge ${tierClass}">${item.TIER || 'Standard'}</div>
+                            <h1 class="actress-name">${item.ACTRESS_NAME}</h1>
+                        </div>
                     </div>
-                `).join('')}
-            </div>
 
-            <div class="content-body">
-                <div style="font-style:italic; border-left:4px solid var(--accent); padding-left:15px; margin-bottom:20px; font-size:1.1rem;">
-                    "${item.INSIGHT_TEXT || 'No insight available.'}"
+                    <div class="stats-card">
+                        ${['VIS','STY','TEC','HEA','RAR'].map(k => `
+                            <div class="stat-row">
+                                <span class="stat-label">${k}</span> ${getGauge(item[k])} <span class="stat-num">${item[k]}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="work-title" style="margin-bottom:25px; font-weight:bold; line-height:1.5;">${item.TITLE}</div>
+
+                    <div class="footer-nav">
+                        <a href="/" class="nav-btn btn-sub">BACK</a>
+                        <a href="${item.SCRAPE_SOURCE || '#'}" class="nav-btn btn-main">CHECK DETAILS</a>
+                    </div>
                 </div>
-                <div style="color:var(--text-sub); font-size:0.9rem; line-height:1.7;">${item.META_DESC || ''}</div>
             </div>
         `;
 
-        if (item.SCRAPE_SOURCE) {
-            document.getElementById('direct-link').href = item.SCRAPE_SOURCE;
-        }
-
-        // 交差判定による遅延読み込みの開始
         initLazyLoad();
+        document.title = `${item.ACTRESS_NAME} | ASL`;
     }
 
-    // --- 遅延読み込み（Intersection Observer） ---
     function initLazyLoad() {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -247,7 +260,6 @@
                 }
             });
         }, { rootMargin: "0px 200px 0px 200px" });
-
         document.querySelectorAll('img.lazy').forEach(img => observer.observe(img));
     }
 
