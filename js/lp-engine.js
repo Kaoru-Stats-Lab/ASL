@@ -7,13 +7,13 @@ function renderASLLandingPage(data) {
     const urlParams = new URLSearchParams(window.location.search);
     const actressFilter = urlParams.get('a');
 
-    // 2. フィルタリング
+    // 2. フィルタリングロジック
     let displayData = data;
     if (actressFilter) {
-        // IDまたは名前でフィルタ
+        // IDが一致するか、名前に検索ワードが含まれる場合に絞り込む
         displayData = data.filter(item => 
             String(item.ACTRESS_ID) === actressFilter || 
-            String(item.ACTRESS_NAME).includes(actressFilter)
+            (item.ACTRESS_NAME && item.ACTRESS_NAME.includes(actressFilter))
         );
     }
 
@@ -25,7 +25,7 @@ function renderASLLandingPage(data) {
         return { ...item, _final_w: baseWeight + personalWeight };
     }).sort((a, b) => b._final_w - a._final_w);
 
-    // 4. HTML描画
+    // 4. HTML描画（タクソノミーとナラティブを確実に反映）
     container.innerHTML = optimizedList.map(item => {
         const observation = item.NARRATIVE ? item.NARRATIVE.substring(0, 45) + '...' : 'Under Analysis...';
         const poster = item.IMAGE_URLS ? item.IMAGE_URLS.split(',')[0] : '';
