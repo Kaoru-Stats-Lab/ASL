@@ -78,8 +78,10 @@
         }
 
         try {
-            const res = await fetch(`${CONFIG.API}?id=${productId}`, { cache: "no-store" });
-            const item = await res.json();
+　　　　// GitHub上の最新JSONを直接読み込み、その中からIDが一致するものを探す
+　　　　const res = await fetch('https://raw.githubusercontent.com/Kaoru-Stats-Lab/ASL/main/all_index.json', { cache: "no-store" });
+　　　　const allData = await res.json();
+　　　　const item = allData.find(d => d.CID === productId);
             if (!item || !item.CID || item.error) throw new Error();
             renderDetail(item);
         } catch (e) {
