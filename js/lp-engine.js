@@ -43,10 +43,10 @@ function renderASLLandingPage(data) {
                     </div>
                     <h2 class="subject-name">${item.ACTRESS_NAME}</h2>
                     <div class="taxonomy-row">
-                        ${item.SERIES_NAME ? `<span class="tag">#${item.SERIES_NAME}</span>` : ''}
-                        <span class="tag">#${item.CUP}cup</span>
-                        <span class="tag">#${item.HEIGHT}cm</span>
-                    </div>
+    ${item.SERIES_NAME ? `<span class="tag">#${item.SERIES_NAME}</span>` : ''}
+    <span class="tag">#${item.CUP || '??'}cup</span>
+    <span class="tag">#${item.HEIGHT || '???'}cm</span>
+</div>
                     <p class="narrative-peek">
                         <span class="label">OBSERVATION:</span> ${observation}
                     </p>
