@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASL v3.5.4 | Adult Stats Lab</title>
+    <title>ASL v3.5.5 | Adult Stats Lab</title>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-606GEFXTW4"></script>
     <script>
       window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);}
@@ -24,10 +24,11 @@
             .side-column { width: 340px; position: sticky; top: 40px; height: fit-content; }
         }
         .hero { aspect-ratio: 16/9; background: #F8F8F8; overflow: hidden; border-radius: 12px; }
-        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; scrollbar-width: none; }
+        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; scrollbar-width: none; -ms-overflow-style: none; }
+        .carousel::-webkit-scrollbar { display: none; }
         .carousel-item { flex: 0 0 100%; scroll-snap-align: center; }
         .carousel-item img { width: 100%; height: 100%; object-fit: contain; }
-        .tier-emblem { display: inline-block; padding: 6px 18px; border-radius: 50px; font-weight: 900; font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .tier-emblem { display: inline-block; padding: 6px 18px; border-radius: 50px; font-weight: 900; font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; }
         .tier-Diamond { background: linear-gradient(135deg, #e0f7fa, #00acc1); color: #FFF; }
         .tier-Platinum { background: linear-gradient(135deg, #e5e4e2, #7d7d7d); color: #FFF; }
         .tier-Gold { background: linear-gradient(135deg, #f1c40f, #d4af37); color: #FFF; }
@@ -36,7 +37,7 @@
         .tier-Stone { background: linear-gradient(135deg, #95a5a6, #34495e); color: #FFF; }
         .tier-Iron { background: linear-gradient(135deg, #555555, #000); color: #FFF; }
         .tax-group { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
-        .tax-tag { padding: 4px 12px; font-size: 0.72rem; font-weight: bold; border-radius: 20px; border: 1px solid var(--border); text-decoration: none; color: var(--text-sub); background: #FDFDFD; }
+        .tax-tag { padding: 4px 12px; font-size: 0.72rem; font-weight: bold; border-radius: 20px; border: 1px solid var(--border); text-decoration: none; color: var(--text-sub); }
         .bio-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #F9F9F9; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #EEE; }
         .bio-item { text-align: center; border-right: 1px solid #EEE; }
         .bio-item:last-child { border-right: none; }
@@ -52,8 +53,6 @@
         .stat-card { background: #FAFAFA; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
         .stat-row { font-family: monospace; font-size: 11px; display: flex; align-items: center; margin-bottom: 6px; }
         .gauge-f { color: var(--accent); } .gauge-e { color: #DDD; }
-        .error-screen { text-align: center; padding: 100px 20px; }
-        .error-code { font-size: 4rem; font-weight: 900; color: #EEE; }
         .footer-nav { display: flex; gap: 10px; padding: 20px 0; }
         @media (max-width: 767px) {
             .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #FFF; padding: 15px 20px calc(15px + env(safe-area-inset-bottom)); border-top: 1px solid #EEE; z-index: 1000; box-sizing: border-box; }
@@ -76,38 +75,28 @@
     async function init() {
         if (localStorage.getItem('asl_unlocked') === 'true') document.body.classList.add('unlocked');
         
-        // 🚀 URL解析の強化: ? 以降のパラメータや末尾スラッシュを完全に無視して純粋なIDのみを抽出
-        const cleanPath = window.location.pathname.replace(/\/$/, "");
-        const urlParts = cleanPath.split('/').filter(Boolean);
-        let productId = urlParts[urlParts.length - 1] || "";
+        // 🚀 強力なID抽出: スラッシュやハイフン、?以降を徹底除去
+        const rawPath = window.location.pathname.replace(/\/$/, "");
+        const pathSegments = rawPath.split('/').filter(Boolean);
+        let pid = pathSegments[pathSegments.length - 1] || "";
         
-        // IDに含まれる可能性のあるゴミを除去 (英数字のみに限定)
-        productId = productId.replace(/[^a-zA-Z0-9]/g, "");
+        // ハイフン以降を削除（sone00614-2 -> sone00614）
+        pid = pid.split('-')[0];
+        // 英数字以外を削除
+        pid = pid.replace(/[^a-zA-Z0-9]/g, "");
 
-        if (!productId || productId === 'p') {
-            document.getElementById('app').innerHTML = '<div class="error-screen"><div class="error-code">LIST</div><p>Archive Mode</p></div>';
+        if (!pid || pid === 'p') {
+            document.getElementById('app').innerHTML = '<div style="padding:100px;text-align:center;color:#EEE;font-weight:900;font-size:3rem;">LIST MODE</div>';
             return;
         }
 
         try {
-            // リクエストURLをエンコードし、キャッシュを回避
-            const fetchUrl = `${CONFIG.API}?id=${encodeURIComponent(productId)}`;
-            const res = await fetch(fetchUrl, { method: 'GET', cache: "no-store" });
-            
-            if (!res.ok) throw new Error("Network Error");
-            
+            const res = await fetch(`${CONFIG.API}?id=${pid}`, { cache: "no-store" });
             const item = await res.json();
             if (!item || !item.CID || item.error) throw new Error("404");
-            
             renderDetail(item);
         } catch (e) {
-            document.getElementById('app').innerHTML = `
-                <div class="error-screen">
-                    <div class="error-code">${e.message === "404" ? "404" : "ERROR"}</div>
-                    <h2>SYSTEM ERROR</h2>
-                    <p style="color:#999;">ID: ${productId}<br>通信エラー、またはデータが見つかりません。</p>
-                    <div style="margin-top:30px;"><a href="/" class="nav-btn btn-sub" style="display:inline-block; padding:12px 30px;">BACK TO ARCHIVE</a></div>
-                </div>`;
+            document.getElementById('app').innerHTML = `<div style="padding:100px;text-align:center;"><h2>DATA ERROR</h2><p>ID: ${pid}</p><a href="/">HOME</a></div>`;
         }
     }
 
@@ -125,8 +114,8 @@
                     </div>
                     <div style="padding:20px;">
                         <div class="tax-group">
-                            ${(item.ACTRESS_NAME||"").split(',').map((n,i)=>`<a href="/?a=${(item.ACTRESS_ID||"").split(',')[i]}" class="tax-tag" style="color:var(--accent); border-color:var(--accent);">👤 ${n.trim()}</a>`).join('')}
-                            <a href="/?s=${item.MAKER_ID}" class="tax-tag">🏢 ${item.MAKER}</a>
+                            ${(item.ACTRESS_NAME||"").split(',').map((n,i)=>`<a href="/?a=${(item.ACTRESS_ID||"").split(',')[i]}" class="tax-tag" style="color:var(--accent); border-color:var(--accent); text-decoration:none;">👤 ${n.trim()}</a>`).join('')}
+                            <a href="/?s=${item.MAKER_ID}" class="tax-tag" style="text-decoration:none;">🏢 ${item.MAKER}</a>
                         </div>
                         <div class="bio-section">
                             <div class="bio-item"><span class="bio-label">BUST / CUP</span><span class="bio-val">${fmt(item.BUST)}</span> ${fmt(item.CUP)!=='N/A'?`<span style="background:var(--accent);color:#FFF;padding:1px 4px;border-radius:3px;font-size:0.7rem;">${item.CUP}</span>`:''}</div>
@@ -139,7 +128,7 @@
                         </div>
                         <div class="report-card">
                             <div class="report-title">EMOTIONAL RESONANCE ANALYSIS</div>
-                            <div class="report-body">${item.NARRATIVE_ALL || 'No analysis data.'}</div>
+                            <div class="report-body">${item.NARRATIVE_ALL || 'No data.'}</div>
                         </div>
                     </div>
                 </div>
