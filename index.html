@@ -3,25 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASL v2.7.3 | Adult Stats Lab</title>
+    <title>ASL v2.7.6 | Adult Stats Lab</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --asl-bg: #05070a; --asl-rose: #ff4d6d; }
         body { background-color: var(--asl-bg); color: #e6edf3; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .privacy-shield { filter: blur(40px); transition: filter 0.4s ease; cursor: pointer; background-color: #111; }
+        
+        /* 統合ブラー・プロトコル */
+        .privacy-shield { filter: blur(45px); transition: filter 0.5s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .video-shield-overlay { position: absolute; inset: 0; z-index: 10; backdrop-filter: blur(45px); background: rgba(5,7,10,0.6); transition: all 0.5s ease; pointer-events: none; }
+        
+        /* 全解除時の挙動 */
         body.unblur-all .privacy-shield { filter: blur(0); }
+        body.unblur-all .video-shield-overlay { backdrop-filter: blur(0); background: rgba(0,0,0,0); opacity: 0; }
+        
         .carousel-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
         .carousel-track::-webkit-scrollbar { display: none; }
-        .carousel-item { flex: 0 0 100%; scroll-snap-align: start; }
+        .carousel-item { flex: 0 0 100%; scroll-snap-align: start; height: 100%; }
         .asl-gradient { background: linear-gradient(90deg, #ff4d6d 0%, #ff758f 100%); }
-        .blur-indicator { position: fixed; top: 24px; right: 24px; z-index: 100; transition: all 0.3s; }
-        body.unblur-all .blur-indicator { opacity: 0.5; }
+        .blur-indicator { position: fixed; top: 24px; right: 24px; z-index: 100; transition: 0.3s; }
+        body.unblur-all .blur-indicator { opacity: 0.4; transform: scale(0.9); }
+        
+        #video-wrapper { width: 100%; position: relative; background: #000; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        @media (max-width: 768px) { #video-wrapper { border-radius: 0; border-left: none; border-right: none; width: 100vw; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; } }
     </style>
 </head>
-<body>
-    <div onclick="toggleGlobalBlur()" class="blur-indicator bg-black/60 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-full flex items-center gap-2 cursor-pointer shadow-2xl">
-        <div class="w-2 h-2 rounded-full bg-rose-500 animate-pulse" id="blur-dot"></div>
-        <span class="text-[9px] font-black uppercase tracking-widest text-white" id="blur-text">Shield Active</span>
+<body class="selection:bg-rose-500/30">
+
+    <div onclick="toggleGlobalBlur()" class="blur-indicator bg-black/80 backdrop-blur-2xl border border-white/20 px-4 py-2 rounded-full flex items-center gap-3 cursor-pointer shadow-2xl">
+        <div class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_10px_#ff4d6d]" id="status-dot"></div>
+        <span class="text-[10px] font-black uppercase tracking-widest text-white italic" id="status-text">Shield Active</span>
     </div>
 
     <div id="asl-root"></div>
@@ -29,14 +40,15 @@
     <script>
         const CONFIG = {
             API: "https://script.google.com/macros/s/AKfycbwXkicb-JnAeZjbYNgjvks1fzmFjZyfmWg078vPhxyrXWSwuQxbV-sISN3AyZ3ONdVHwg/exec",
-            REV: "v2.7.3-ADAPTIVE"
+            REV: "v2.7.6-SHIELD"
         };
         let db = [];
 
         function toggleGlobalBlur() {
             document.body.classList.toggle('unblur-all');
-            const isActive = document.body.classList.contains('unblur-all');
-            document.getElementById('blur-text').innerText = isActive ? "Shield Off" : "Shield Active";
+            const isOff = document.body.classList.contains('unblur-all');
+            document.getElementById('status-text').innerText = isOff ? "Shield Off" : "Shield Active";
+            document.getElementById('status-dot').style.opacity = isOff ? "0.3" : "1";
         }
 
         const navigate = (path) => { window.history.pushState({}, '', path); router(); };
@@ -60,15 +72,15 @@
 
         function renderGallery() {
             const root = document.getElementById('asl-root');
-            root.innerHTML = `<header class="p-8 border-b border-white/5"><h1 class="text-2xl font-black italic text-rose-500 leading-none tracking-tighter">ASL ANALYTICS</h1></header>
+            root.innerHTML = `<header class="p-8 border-b border-white/5"><h1 class="text-2xl font-black italic text-rose-500 tracking-tighter leading-none uppercase">ASL Analytics</h1></header>
                 <main class="p-4 grid grid-cols-2 gap-4">
                     ${db.map(node => `
-                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/40 rounded-2xl overflow-hidden border border-white/5 cursor-pointer">
+                        <div onclick="navigate('/p/${node.CID}')" class="bg-slate-900/40 rounded-2xl overflow-hidden border border-white/5 cursor-pointer active:scale-95 transition-all">
                             <div class="aspect-[3/4] relative bg-slate-800">
-                                <img src="${node.IMAGE_LIST ? node.IMAGE_LIST[0] : ''}" class="w-full h-full object-cover privacy-shield" loading="lazy">
-                                <div class="absolute top-2 left-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-[8px] font-bold">T:${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
+                                <img src="${node.IMAGE_LIST ? node.IMAGE_LIST[0] : ''}" class="w-full h-full object-cover privacy-shield">
+                                <div class="absolute top-2 left-2 bg-black/70 px-2 py-1 rounded text-[8px] font-bold">T:${parseFloat(node.T_SCORE || 0).toFixed(1)}</div>
                             </div>
-                            <div class="p-3"><h3 class="text-[10px] font-bold line-clamp-2 text-slate-400 leading-snug uppercase tracking-tighter">${node.TITLE}</h3></div>
+                            <div class="p-3"><h3 class="text-[10px] font-bold line-clamp-2 text-slate-400 uppercase leading-snug tracking-tighter">${node.TITLE}</h3></div>
                         </div>
                     `).join('')}
                 </main>`;
@@ -86,6 +98,7 @@
                         ${images.map(img => `<div class="carousel-item"><img src="${img}" class="w-full h-full object-contain privacy-shield"></div>`).join('')}
                     </div>
                     <button onclick="event.stopPropagation(); navigate('/');" class="absolute top-6 left-6 w-10 h-10 bg-black/50 backdrop-blur rounded-full text-white border border-white/10 flex items-center justify-center">✕</button>
+                    ${images.length > 1 ? '<div class="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pointer-events-none"><div class="w-8 h-1 bg-rose-500 rounded-full"></div><div class="w-1.5 h-1 bg-white/20 rounded-full"></div></div>' : ''}
                 </div>
 
                 <div class="p-8 space-y-10 pb-40">
@@ -96,35 +109,37 @@
                         </div>
                         <h2 class="text-xl font-bold leading-tight mt-4 text-slate-100">${node.TITLE}</h2>
                         <div class="mt-6 flex flex-wrap gap-2">
-                            ${(node.ACTRESS_LIST || []).map(a => `
-                                <div onclick="event.stopPropagation(); navigate('/a/${a.slug}')" class="px-3 py-1.5 bg-rose-500/10 rounded-full border border-rose-500/20 cursor-pointer active:scale-95 transition-all">
-                                    <span class="text-[10px] font-black text-rose-400 uppercase tracking-widest italic">@${a.name}</span>
-                                </div>
-                            `).join('')}
+                            ${(node.ACTRESS_LIST || []).map(a => `<div onclick="event.stopPropagation(); navigate('/a/${a.slug}')" class="px-3 py-1.5 bg-rose-500/10 rounded-full border border-rose-500/20 cursor-pointer text-[10px] font-black text-rose-400 uppercase tracking-widest italic">@${a.name}</div>`).join('')}
                         </div>
                     </section>
 
                     <section class="space-y-4">
-                        <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Video Evidence Analysis</h4>
-                        <div id="video-container" class="relative aspect-video bg-slate-900 rounded-3xl overflow-hidden border border-white/10 flex items-center justify-center">
-                            <button onclick="event.stopPropagation(); resolveAndLoadVideo('${node.MOVIE_URL || ''}')" class="flex flex-col items-center gap-3 group">
-                                <div class="w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,77,109,0.4)] group-active:scale-95 transition-all">
-                                    <svg class="w-6 h-6 text-white fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                </div>
-                                <span class="text-[10px] font-black text-rose-500 uppercase tracking-widest italic">Decrypt Preview</span>
-                            </button>
+                        <div class="flex justify-between items-center px-1">
+                            <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest italic leading-none">Visual Evidence Analysis</h4>
+                            <span class="text-[8px] text-slate-600 font-mono italic">SYNS-BLUR ENABLED</span>
+                        </div>
+                        <div id="video-wrapper">
+                            <div class="video-shield-overlay" id="v-shield"></div>
+                            
+                            <div id="video-container" class="relative aspect-video flex items-center justify-center bg-slate-900/50">
+                                <button onclick="event.stopPropagation(); resolveAndLoadVideo('${node.MOVIE_URL || ''}')" class="flex flex-col items-center gap-3 z-20">
+                                    <div class="w-16 h-16 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,77,109,0.5)] group-active:scale-95 transition-all">
+                                        <svg class="w-8 h-8 text-white fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    </div>
+                                    <span class="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] italic">Init Stream</span>
+                                </button>
+                            </div>
                         </div>
                     </section>
 
                     <section class="space-y-4 bg-white/[0.02] p-8 rounded-3xl border border-white/5">
                         ${['VIS', 'STY', 'TECH', 'HEA', 'RAR', 'VAL'].map(key => `
                             <div class="space-y-1.5">
-                                <div class="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-widest"><span>${key}</span><span>${parseFloat(node[key]||0).toFixed(1)}</span></div>
+                                <div class="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none"><span>${key}</span><span>${parseFloat(node[key]||0).toFixed(1)}</span></div>
                                 <div class="h-1 bg-white/5 rounded-full overflow-hidden"><div class="asl-gradient h-full" style="width: ${Math.min(100, (parseFloat(node[key]||0)/5)*100)}%"></div></div>
                             </div>
                         `).join('')}
                     </section>
-                    <p class="text-sm leading-relaxed text-slate-400 italic font-medium opacity-80">"${node.NARRATIVE_ALL || 'Processing Narrative...'}"</p>
                 </div>
 
                 <div class="fixed bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/95 to-transparent z-50">
@@ -135,34 +150,26 @@
 
         function resolveAndLoadVideo(rawUrl) {
             if (!rawUrl) return;
-            
-            // 端末判定: モバイルデバイスかどうかをチェック
+            const container = document.getElementById('video-container');
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             
-            // PCなら /part/ のまま（高解像度）、モバイルなら /free_player/ に変換（安定性）
+            const vWidth = isMobile ? window.innerWidth : container.offsetWidth;
+            const vHeight = Math.floor(vWidth * 9 / 16);
+            
             let finalUrl = rawUrl;
             if (isMobile) {
-                finalUrl = rawUrl.replace('/part/', '/free_player/');
+                finalUrl = rawUrl.replace('/part/', '/free_player/').replace('size=720_480', `size=${vWidth}_${vHeight}`);
             }
-            
-            const container = document.getElementById('video-container');
-            container.innerHTML = `
-                <iframe 
-                    src="${finalUrl}" 
-                    width="100%" 
-                    height="100%" 
-                    frameborder="0" 
-                    allow="autoplay; fullscreen" 
-                    referrerpolicy="no-referrer-when-downgrade"
-                    class="absolute inset-0">
-                </iframe>`;
+
+            container.style.height = vHeight + 'px';
+            container.innerHTML = `<iframe src="${finalUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen" referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0"></iframe>`;
         }
 
         function renderActressLP(slug) {
             const works = db.filter(n => n.ACTRESS_LIST && n.ACTRESS_LIST.some(a => a.slug === slug));
             const actress = works.length > 0 ? works[0].ACTRESS_LIST.find(a => a.slug === slug) : {name: "Unknown"};
             const root = document.getElementById('asl-root');
-            root.innerHTML = `<header class="p-8 border-b border-white/5">
+            root.innerHTML = `<header class="p-8">
                     <button onclick="navigate('/')" class="text-[9px] mb-6 font-black tracking-[0.3em] border border-white/10 px-4 py-1.5 rounded-full text-slate-500 uppercase italic">← Return</button>
                     <h1 class="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">${actress.name}</h1>
                 </header>
@@ -172,7 +179,6 @@
                     </div>`).join('')}
                 </main>`;
         }
-
         bootASL();
     </script>
 </body>
