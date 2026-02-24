@@ -141,5 +141,24 @@
     }
     init();
 </script>
+    <script src="js/protocol.js"></script>
+<script src="js/lp-engine.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', async () => {
+        try {
+            // 2000件の全個体インデックスをロード
+            const res = await fetch('all_index.json');
+            const data = await res.json();
+            
+            // 秘匿プロトコルに基づく最適化描画を開始
+            if (typeof renderASLLandingPage === 'function') {
+                renderASLLandingPage(data);
+            }
+        } catch (e) {
+            // 異常時はサイレントに処理（ステータス500相当）
+            console.log("ASL_SYSTEM_ERROR: 500");
+        }
+    });
+</script>
 </body>
 </html>
